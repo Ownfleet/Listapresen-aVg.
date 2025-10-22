@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lista de Presença VG • Check-in</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand:#ee4d2d; --brand2:#ff6b3d; --ink:#1f2937;
+}
+body {
+  margin:0; font-family:Poppins,system-ui;
+  background:linear-gradient(145deg,var(--brand),var(--brand2));
+  color:var(--ink); display:flex; justify-content:center; align-items:center;
+  min-height:100vh; padding:20px;
+}
+.card {
+  background:#fff; border-radius:18px; box-shadow:0 18px 48px rgba(238,77,45,.25);
+  padding:26px; width:100%; max-width:420px;
+}
+h2 { color:var(--brand); text-align:center; margin-top:0; }
+label { display:block; font-weight:600; margin-top:12px; }
+input,select {
+  width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;
+}
+button {
+  width:100%; margin-top:18px; padding:10px;
+  border:none; border-radius:8px; font-weight:600; cursor:pointer;
+  background:var(--brand); color:#fff; transition:.2s;
+}
+button:hover { background:var(--brand2); }
+#status { margin-top:12px; font-weight:600; text-align:center; }
+.hidden { display:none; }
+small { color:#6b7280; font-size:.85rem; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>Confirmação de Presença</h2>
+
+    <!-- login -->
+    <div id="login-area">
+      <button id="btnGoogle">Entrar com Google</button>
+    </div>
+
+    <!-- formulário -->
+    <div id="form-area" class="hidden">
+      <p><b id="user-email"></b></p>
+
+      <label>ID do motorista</label>
+      <input id="driver_id" placeholder="Ex: 12345">
+
+      <label>Nome</label>
+      <input id="nome" placeholder="Nome completo">
+
+      <label>Telefone</label>
+      <input id="telefone" placeholder="(11) 99999-9999">
+
+      <label>Tipo de veículo</label>
+      <input id="tipo_veiculo" placeholder="Ex: Fiorino">
+
+      <label>Placa</label>
+      <input id="placa" placeholder="ABC-1234">
+
+      <label>Período</label>
+      <select id="periodo">
+        <option value="AM">AM</option>
+        <option value="SD">SD</option>
+      </select>
+
+      <label>Região</label>
+      <select id="regiao"></select>
+
+      <label>Rota (ex: A-1)</label>
+      <select id="rota"></select>
+
+      <p id="status">Aguardando localização...</p>
+      <button id="btnEnviar" disabled>Confirmar Presença</button>
+
+      <small>O sistema verifica sua posição a cada 1 minuto e só permite o envio se estiver dentro da área da base.</small>
+    </div>
+  </div>
+
+<script>
+const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
+const SUPABASE_ANON_KEY = "SUA-CHAVE-ANON";
+const supabase = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const btnGoogle = document.getElementById('btnGoogle');
+const formArea = document.getElementById('form-area');
+const loginArea = document.getElementById('login-area');
+const userEmail = document.getElementById('user-email');
+const statusEl = document.getElementById('status');
+const btnEnviar = document.getElementById('btnEnviar');
+const regiaoSel = document.getElementById('regiao');
+const rotaSel = document.getElementById('rota');
+
+let user = null, position = null, regioes = [], rotas = [];
+
+// --- LOGIN GOOGLE ---
+btnGoogle.onclick = async ()=>{
+  const {error} = await supabase.auth.signInWithOAuth({provider:'google'});
+  if(error) alert("Erro no login: "+error.message);
+};
+
+supabase.auth.onAuthStateChange((evt, session)=>{
+  if(session?.user){
+    user = session.user;
+    loginArea.classList.add('hidden');
+    formArea.classList.remove('hidden');
+    userEmail.textContent = "Logado: "+user.email;
+    carregarDados();
+    iniciarLocalizacao();
+  }
+});
+
+// --- CARREGA REGIÕES E ROTAS ---
+async function carregarDados(){
+  const {data:regs} = await supabase.from('"Lista de Presença VG".regioes').select('*');
+  const {data:rts} = await supabase.from('"Lista de Presença VG".rotas').select('*');
+  regioes = regs||[]; rotas = rts||[];
+
+  regiaoSel.innerHTML = "<option value=''>Selecione</option>";
+  regioes.forEach(r=>{
+    const o=document.createElement('option');
+    o.value=r.id; o.textContent=`${r.nome} (${r.raio_meters}m)`; regiaoSel.appendChild(o);
+  });
+  rotaSel.innerHTML = "<option value=''>Selecione</option>";
+  rotas.forEach(r=>{
+    const o=document.createElement('option');
+    o.value=r.codigo; o.textContent=r.codigo; rotaSel.appendChild(o);
+  });
+}
+
+// --- GEOLOCALIZAÇÃO ---
+function iniciarLocalizacao(){
+  if(!navigator.geolocation){statusEl.textContent="Geolocalização não suportada";return;}
+  function sucesso(pos){
+    position = pos.coords;
+    checarRaio();
+  }
+  function erro(){statusEl.textContent="Permita acesso à localização.";}
+  navigator.geolocation.getCurrentPosition(sucesso,erro,{enableHighAccuracy:true});
+  setInterval(()=>navigator.geolocation.getCurrentPosition(sucesso,erro,{enableHighAccuracy:true}),60000);
+}
+
+function haversine(lat1, lon1, lat2, lon2){
+  const R=6371000,toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function checarRaio(){
+  if(!position||!regiaoSel.value)return;
+  const reg=regioes.find(r=>r.id===regiaoSel.value);
+  const dist=haversine(position.latitude,position.longitude,reg.lat,reg.lon);
+  statusEl.textContent=`Distância até ${reg.nome}: ${Math.round(dist)}m (raio ${reg.raio_meters}m)`;
+  if(dist<=reg.raio_meters){btnEnviar.disabled=false;statusEl.textContent+=" ✅ Dentro da área";}
+  else{btnEnviar.disabled=true;statusEl.textContent+=" ❌ Fora da área";}
+}
+regiaoSel.addEventListener('change',checarRaio);
+
+// --- ENVIAR PRESENÇA ---
+btnEnviar.onclick = async ()=>{
+  if(!user||!position) return alert("Erro: login ou localização ausente.");
+
+  const payload={
+    driver_id:document.getElementById('driver_id').value,
+    nome:document.getElementById('nome').value,
+    telefone:document.getElementById('telefone').value,
+    tipo_veiculo:document.getElementById('tipo_veiculo').value,
+    placa:document.getElementById('placa').value,
+    periodo:document.getElementById('periodo').value,
+    regiao_id:regiaoSel.value,
+    rota_codigo:rotaSel.value,
+    lat:position.latitude,
+    lon:position.longitude,
+    created_by:user.id
+  };
+
+  const {error} = await supabase.from('"Lista de Presença VG".presencas').insert([payload]);
+  if(error) alert("Erro: "+error.message);
+  else{alert("✅ Presença confirmada com sucesso!"); btnEnviar.disabled=true;}
+};
+</script>
+</body>
+</html>
