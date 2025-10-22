@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Lista de Presença VG • Check-in</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Fonte e estilos -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
 <style>
 :root {
   --brand:#ee4d2d; --brand2:#ff6b3d; --ink:#1f2937;
@@ -84,11 +85,16 @@ small { color:#6b7280; font-size:.85rem; }
     </div>
   </div>
 
-<script>
+<!-- Script principal -->
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// 🔧 Configuração do Supabase
 const SUPABASE_URL = "https://rtuxwydhgucdqbmyuhbt.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0dXh3eWRoZ3VjZHFibXl1aGJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MTQyOTEsImV4cCI6MjA3NTM5MDI5MX0._69KQdPbipke-jVmF_UEO3VAYaiEqpa1h81jUVTN684";
-const supabase = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Elementos da interface
 const btnGoogle = document.getElementById('btnGoogle');
 const formArea = document.getElementById('form-area');
 const loginArea = document.getElementById('login-area');
@@ -101,92 +107,108 @@ const rotaSel = document.getElementById('rota');
 let user = null, position = null, regioes = [], rotas = [];
 
 // --- LOGIN GOOGLE ---
-btnGoogle.onclick = async ()=>{
-  const {error} = await supabase.auth.signInWithOAuth({provider:'google'});
-  if(error) alert("Erro no login: "+error.message);
+btnGoogle.onclick = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+  if (error) alert("Erro no login: " + error.message);
 };
 
-supabase.auth.onAuthStateChange((evt, session)=>{
-  if(session?.user){
+supabase.auth.onAuthStateChange((evt, session) => {
+  if (session?.user) {
     user = session.user;
     loginArea.classList.add('hidden');
     formArea.classList.remove('hidden');
-    userEmail.textContent = "Logado: "+user.email;
+    userEmail.textContent = "Logado: " + user.email;
     carregarDados();
     iniciarLocalizacao();
   }
 });
 
 // --- CARREGA REGIÕES E ROTAS ---
-async function carregarDados(){
-  const {data:regs} = await supabase.from('"Lista de Presença VG".regioes').select('*');
-  const {data:rts} = await supabase.from('"Lista de Presença VG".rotas').select('*');
-  regioes = regs||[]; rotas = rts||[];
+async function carregarDados() {
+  const { data: regs, error: e1 } = await supabase.from('"Lista de Presença VG".regioes').select('*');
+  const { data: rts, error: e2 } = await supabase.from('"Lista de Presença VG".rotas').select('*');
+  if (e1 || e2) return alert("Erro ao carregar dados: " + (e1?.message || e2?.message));
+  regioes = regs || []; rotas = rts || [];
 
   regiaoSel.innerHTML = "<option value=''>Selecione</option>";
-  regioes.forEach(r=>{
-    const o=document.createElement('option');
-    o.value=r.id; o.textContent=`${r.nome} (${r.raio_meters}m)`; regiaoSel.appendChild(o);
+  regioes.forEach(r => {
+    const o = document.createElement('option');
+    o.value = r.id; o.textContent = `${r.nome} (${r.raio_meters}m)`;
+    regiaoSel.appendChild(o);
   });
+
   rotaSel.innerHTML = "<option value=''>Selecione</option>";
-  rotas.forEach(r=>{
-    const o=document.createElement('option');
-    o.value=r.codigo; o.textContent=r.codigo; rotaSel.appendChild(o);
+  rotas.forEach(r => {
+    const o = document.createElement('option');
+    o.value = r.codigo; o.textContent = r.codigo;
+    rotaSel.appendChild(o);
   });
 }
 
 // --- GEOLOCALIZAÇÃO ---
-function iniciarLocalizacao(){
-  if(!navigator.geolocation){statusEl.textContent="Geolocalização não suportada";return;}
-  function sucesso(pos){
+function iniciarLocalizacao() {
+  if (!navigator.geolocation) {
+    statusEl.textContent = "Geolocalização não suportada";
+    return;
+  }
+  function sucesso(pos) {
     position = pos.coords;
     checarRaio();
   }
-  function erro(){statusEl.textContent="Permita acesso à localização.";}
-  navigator.geolocation.getCurrentPosition(sucesso,erro,{enableHighAccuracy:true});
-  setInterval(()=>navigator.geolocation.getCurrentPosition(sucesso,erro,{enableHighAccuracy:true}),60000);
+  function erro() {
+    statusEl.textContent = "Permita o acesso à localização.";
+  }
+  navigator.geolocation.getCurrentPosition(sucesso, erro, { enableHighAccuracy: true });
+  setInterval(() => navigator.geolocation.getCurrentPosition(sucesso, erro, { enableHighAccuracy: true }), 60000);
 }
 
-function haversine(lat1, lon1, lat2, lon2){
-  const R=6371000,toRad=d=>d*Math.PI/180;
-  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
-  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function checarRaio(){
-  if(!position||!regiaoSel.value)return;
-  const reg=regioes.find(r=>r.id===regiaoSel.value);
-  const dist=haversine(position.latitude,position.longitude,reg.lat,reg.lon);
-  statusEl.textContent=`Distância até ${reg.nome}: ${Math.round(dist)}m (raio ${reg.raio_meters}m)`;
-  if(dist<=reg.raio_meters){btnEnviar.disabled=false;statusEl.textContent+=" ✅ Dentro da área";}
-  else{btnEnviar.disabled=true;statusEl.textContent+=" ❌ Fora da área";}
+function checarRaio() {
+  if (!position || !regiaoSel.value) return;
+  const reg = regioes.find(r => r.id === regiaoSel.value);
+  const dist = haversine(position.latitude, position.longitude, reg.lat, reg.lon);
+  statusEl.textContent = `Distância até ${reg.nome}: ${Math.round(dist)}m (raio ${reg.raio_meters}m)`;
+  if (dist <= reg.raio_meters) {
+    btnEnviar.disabled = false;
+    statusEl.textContent += " ✅ Dentro da área";
+  } else {
+    btnEnviar.disabled = true;
+    statusEl.textContent += " ❌ Fora da área";
+  }
 }
-regiaoSel.addEventListener('change',checarRaio);
+regiaoSel.addEventListener('change', checarRaio);
 
 // --- ENVIAR PRESENÇA ---
-btnEnviar.onclick = async ()=>{
-  if(!user||!position) return alert("Erro: login ou localização ausente.");
+btnEnviar.onclick = async () => {
+  if (!user || !position) return alert("Erro: login ou localização ausente.");
 
-  const payload={
-    driver_id:document.getElementById('driver_id').value,
-    nome:document.getElementById('nome').value,
-    telefone:document.getElementById('telefone').value,
-    tipo_veiculo:document.getElementById('tipo_veiculo').value,
-    placa:document.getElementById('placa').value,
-    periodo:document.getElementById('periodo').value,
-    regiao_id:regiaoSel.value,
-    rota_codigo:rotaSel.value,
-    lat:position.latitude,
-    lon:position.longitude,
-    created_by:user.id
+  const payload = {
+    driver_id: document.getElementById('driver_id').value,
+    nome: document.getElementById('nome').value,
+    telefone: document.getElementById('telefone').value,
+    tipo_veiculo: document.getElementById('tipo_veiculo').value,
+    placa: document.getElementById('placa').value,
+    periodo: document.getElementById('periodo').value,
+    regiao_id: regiaoSel.value,
+    rota_codigo: rotaSel.value,
+    lat: position.latitude,
+    lon: position.longitude,
+    created_by: user.id
   };
 
-  const {error} = await supabase.from('"Lista de Presença VG".presencas').insert([payload]);
-  if(error) alert("Erro: "+error.message);
-  else{alert("✅ Presença confirmada com sucesso!"); btnEnviar.disabled=true;}
+  const { error } = await supabase.from('"Lista de Presença VG".presencas').insert([payload]);
+  if (error) alert("Erro: " + error.message);
+  else {
+    alert("✅ Presença confirmada com sucesso!");
+    btnEnviar.disabled = true;
+  }
 };
 </script>
 </body>
 </html>
-
