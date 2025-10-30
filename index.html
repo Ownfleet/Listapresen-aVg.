@@ -2,197 +2,207 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Lista de Presença • HUB LSP-18 VG</title>
 
-<!-- Estilos -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 :root{
-  --brand:#ee4d2d;--brand2:#ff6b3d;--ink:#f1f5f9;--muted:#94a3b8;
-  --bg:#0b0f19;--glass:rgba(255,255,255,.08);
-  --radius:18px;--neon:0 0 16px #ff6b3d,0 0 32px #ee4d2d;
+  --brand:#ee4d2d;--brand2:#ff6b3d;--bg:#0b0f19;
+  --card:rgba(255,255,255,.08);--line:rgba(255,255,255,.15);
+  --radius:22px;--ink:#f1f5f9;--muted:#9fb0c0;
 }
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:"Plus Jakarta Sans",system-ui,Arial;
-  background:radial-gradient(900px 600px at 70% -20%,rgba(255,107,61,.15) 0,transparent 70%),linear-gradient(145deg,#0a0e1a,#141d26);
-  color:var(--ink);display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden;
+  background:linear-gradient(145deg,#0b0f19,#111b2a);
+  color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:0 18px;
 }
+
+/* ===== Header ===== */
 header{
-  position:fixed;top:0;left:0;right:0;text-align:center;
-  background:linear-gradient(90deg,#ee4d2d,#ff6b3d,#ee4d2d);
-  padding:14px;font-weight:800;letter-spacing:.5px;
-  color:#fff;text-shadow:0 0 10px rgba(255,255,255,.4);
-  box-shadow:0 0 18px rgba(238,77,45,.4);z-index:1000;
+  position:fixed;top:0;width:100%;text-align:center;
+  background:linear-gradient(90deg,var(--brand),var(--brand2),var(--brand));
+  color:#fff;padding:16px;font-weight:800;font-size:1.3rem;
+  box-shadow:0 10px 30px rgba(238,77,45,.3);
+  animation:bar 8s linear infinite;background-size:200% 100%;
 }
-footer{
-  position:fixed;bottom:8px;width:100%;text-align:center;font-size:12px;color:#aaa;
+@keyframes bar{0%{background-position:0 0}100%{background-position:200% 0}}
+
+.container{
+  width:min(960px,96vw);
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:0 40px 90px rgba(238,77,45,.25);
+  padding:28px;margin-top:80px;
+  backdrop-filter:blur(12px);
 }
-.modal-backdrop{
-  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.75);backdrop-filter:blur(10px);z-index:100;
-}
-.modal{
-  width:min(92vw,520px);background:var(--glass);border-radius:var(--radius);
-  border:1px solid rgba(255,255,255,.1);padding:26px;
-  box-shadow:0 0 30px rgba(238,77,45,.25),inset 0 0 12px rgba(255,255,255,.06);
-  animation:fadeIn .4s ease-out both;
-}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-h2{margin-bottom:6px;color:#fff;font-weight:800;text-shadow:var(--neon);}
-.sub{color:#cbd5e1;font-size:13px;margin-bottom:14px}
-.kpi{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)}
-.btn{
-  padding:12px 18px;border:0;border-radius:var(--radius);font-weight:800;
-  background:linear-gradient(135deg,#ff6b3d,#ee4d2d);
-  color:#fff;cursor:pointer;
-  box-shadow:0 0 12px rgba(238,77,45,.4);transition:.2s;
-}
-.btn:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(255,107,61,.6)}
-.btn-ghost{background:rgba(255,255,255,.05);color:#ff6b3d;border:1.5px solid rgba(255,107,61,.4);}
+
+/* ===== Mapa ===== */
+#map{height:320px;border-radius:18px;margin-bottom:16px;overflow:hidden}
 .chip{
-  padding:8px 12px;border-radius:999px;font-weight:800;font-size:13px;
-  border:1px dashed rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.5px;
+  display:inline-block;padding:10px 14px;border-radius:999px;
+  border:1px dashed rgba(255,255,255,.25);
+  font-weight:700;font-size:.95rem;margin-bottom:12px;
 }
-.ok{color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)}
-.bad{color:#f87171;background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.3)}
-#map{height:220px;margin:10px 0;border-radius:14px;overflow:hidden}
+.ok{color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);}
+.bad{color:#f87171;background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.4);}
+
+/* ===== Inputs ===== */
+label{font-weight:700;display:block;margin:8px 4px 6px;}
 input,select{
-  width:100%;padding:12px 14px;margin-top:10px;
-  border:1.6px solid rgba(255,255,255,.1);border-radius:14px;
-  background:rgba(255,255,255,.05);color:#fff;
-  font:inherit;transition:border .2s,box-shadow .2s;
+  width:100%;padding:16px 14px;border-radius:16px;
+  background:rgba(255,255,255,.08);border:1.8px solid var(--line);
+  color:#fff;font:inherit;
 }
-input:focus,select:focus{border-color:#ff6b3d;box-shadow:0 0 0 3px rgba(255,107,61,.3);outline:none}
-label{font-weight:700;font-size:13px;margin-top:12px;display:block;color:#e2e8f0}
-.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-.success{text-align:center;padding:30px}
-.success .check{
-  width:90px;height:90px;margin:0 auto 12px;background:linear-gradient(135deg,#16a34a,#22c55e);
-  border-radius:50%;font-size:38px;display:grid;place-items:center;color:#fff;
-  box-shadow:0 0 20px rgba(16,185,129,.5);
+input:focus,select:focus{border-color:var(--brand2);outline:none;box-shadow:0 0 0 3px rgba(255,107,61,.25)}
+.grid{display:grid;gap:12px}
+@media(min-width:700px){.grid.two{grid-template-columns:1fr 1fr}}
+
+/* ===== Botões ===== */
+.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:18px;}
+.btn{
+  padding:16px 22px;border:0;border-radius:16px;
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  color:#fff;font-weight:800;cursor:pointer;
+  box-shadow:0 20px 50px rgba(238,77,45,.25);
+  transition:.2s transform;
 }
-.pulsing{animation:pulse 1.4s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:.8}50%{opacity:.4}}
+.btn:hover{transform:translateY(-2px)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ===== Footer ===== */
+footer{text-align:center;margin-top:26px;color:#9fb0c0;font-size:.9rem}
+footer span{color:#ffbea9}
 </style>
 </head>
 <body>
-<header>Lista de Presença • HUB LSP-18 VG</header>
 
-<!-- MODAL 1: GPS -->
-<div id="gpsModal" class="modal-backdrop">
-  <div class="modal">
-    <h2>Status de Localização</h2>
-    <div class="sub">Permita o GPS — só continua quando estiver dentro do raio autorizado.</div>
-    <div id="map"></div>
-    <div style="margin:14px 0"><span id="statusChip" class="chip pulsing">Aguardando GPS...</span></div>
-    <div class="kpi"><span>Distância do HUB</span><span id="distance">–</span> m</div>
-    <div class="kpi"><span>Raio permitido</span><span id="radius">250</span> m</div>
-    <div class="actions">
-      <button id="recalibrateBtn" class="btn-ghost">📡 Calibrar</button>
-      <button id="continueBtn" class="btn" disabled>Continuar</button>
+<header>Lista de Presença • HUB LSP–18 VG</header>
+
+<!-- Modal GPS -->
+<div class="container" id="gpsCard">
+  <h2>Status de Localização</h2>
+  <p>O sistema verifica sua posição — você só pode continuar dentro do raio autorizado.</p>
+  <div id="map"></div>
+  <div id="statusChip" class="chip bad">Aguardando localização...</div>
+  <p>Distância até o HUB: <b id="distance">–</b> m</p>
+  <div class="actions">
+    <button class="btn" id="continueBtn" disabled>Continuar</button>
+  </div>
+</div>
+
+<!-- Modal Form -->
+<div class="container" id="formCard" style="display:none">
+  <h2>Registrar Presença</h2>
+  <p>Preencha os dados abaixo:</p>
+
+  <div class="grid two">
+    <div><label>ID do Motorista</label><input id="driver_id"></div>
+    <div><label>Placa</label><input id="plate" placeholder="ABC1D23"></div>
+    <div><label>Nome Completo</label><input id="name"></div>
+    <div><label>Veículo</label>
+      <select id="vehicle"><option value="">Selecione...</option><option>Moto</option><option>Passeio</option><option>Fiorino</option></select>
     </div>
+    <div><label>Letra–Número da Rota</label><input id="assignment_code" maxlength="4" placeholder="A-12"></div>
+    <div><label>Turno</label><select id="turno"><option>AM</option><option>SD</option></select></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="submitBtn">Registrar ✅</button>
   </div>
 </div>
 
-<!-- MODAL 2: FORM -->
-<div id="presenceModal" class="modal-backdrop" style="display:none">
-  <div class="modal">
-    <h2>Registrar Presença</h2>
-    <div class="sub">Confirme seus dados para registrar no sistema.</div>
-
-    <label>ID do Motorista</label><input id="driver_id" placeholder="Ex: 000123">
-    <label>Nome Completo</label><input id="name">
-    <label>Veículo</label>
-    <select id="vehicle"><option value="">Selecione...</option><option>Moto</option><option>Passeio</option><option>Fiorino</option><option>Van</option><option>Outro</option></select>
-    <label>Placa</label><input id="plate" placeholder="ABC1D23">
-    <label>Turno</label><select id="shift"><option value="">Selecione...</option><option>AM</option><option>SD</option></select>
-    <label>Letra–Número da Rota</label><input id="assignment_code" maxlength="4" placeholder="A-12">
-    <label>Turno da Rota</label><select id="turno"><option value="">Selecione...</option><option>AM</option><option>SD</option></select>
-
-    <div class="actions">
-      <button id="backBtn" class="btn-ghost">Voltar</button>
-      <button id="submitBtn" class="btn">Registrar ✅</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL 3: SUCESSO -->
-<div id="successModal" class="modal-backdrop" style="display:none">
-  <div class="modal success">
-    <div class="check">✓</div>
-    <h2>Presença registrada!</h2>
-    <p id="successInfo" class="sub"></p>
-    <button id="closeSuccess" class="btn">Fechar</button>
-  </div>
-</div>
-
-<footer>© HUB LSP-18 VG • Sistema de presença com geofence ativo</footer>
+<footer>© HUB LSP–18 VG • Sistema de presença com geofence ativo<br><span>by Create Richard LSP-12</span></footer>
 
 <script>
-const hub = { lat:-23.443930639321323, lon:-46.52911457443008, radius_m:250 };
-const API_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://script.google.com/macros/s/AKfycbzE7CWdCriIWLuwIw1I1jqT8ysbpO-jMeGCtaNXTm8SLUL7X0xp2fRPgT65JsaUOJhC/exec");
+const hub = {lat:-23.443930639321323, lon:-46.52911457443008, radius_m:250};
+let coord=null, inside=false;
+const chip=document.getElementById("statusChip");
+const distEl=document.getElementById("distance");
+const continueBtn=document.getElementById("continueBtn");
+const gpsCard=document.getElementById("gpsCard");
+const formCard=document.getElementById("formCard");
 
-const map = L.map("map",{zoomControl:false}).setView([hub.lat,hub.lon],18);
+const map=L.map("map",{zoomControl:false}).setView([hub.lat,hub.lon],18);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP-18 VG");
+L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP–18 VG");
 L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ff6b3d",fillColor:"#ff6b3d",fillOpacity:0.25}).addTo(map);
+let userMarker=null;
 
-const gpsModal=document.getElementById("gpsModal"),presenceModal=document.getElementById("presenceModal"),successModal=document.getElementById("successModal");
-const statusChip=document.getElementById("statusChip"),distanceEl=document.getElementById("distance"),cont=document.getElementById("continueBtn");
-const driver_id=document.getElementById("driver_id"),nameEl=document.getElementById("name"),vehicle=document.getElementById("vehicle"),plate=document.getElementById("plate"),shift=document.getElementById("shift"),assignment_code=document.getElementById("assignment_code"),turno=document.getElementById("turno"),submitBtn=document.getElementById("submitBtn"),successInfo=document.getElementById("successInfo");
-
-let coord=null,userMarker=null;
 function toRad(v){return v*Math.PI/180;}
-function dist(lat1,lon1,lat2,lon2){const R=6371000;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
-function setChip(t,c=""){statusChip.textContent=t;statusChip.className="chip "+c;}
+function dist(lat1,lon1,lat2,lon2){
+  const R=6371000;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
 
+/* --- Monitora continuamente --- */
 function monitorGPS(){
-  if(!navigator.geolocation){setChip("GPS não suportado","bad");return;}
-  setChip("Obtendo GPS...","pulsing");
+  if(!navigator.geolocation){
+    chip.textContent="❌ GPS não suportado";chip.className="chip bad";return;
+  }
   navigator.geolocation.watchPosition(pos=>{
     coord=pos.coords;
     const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
-    distanceEl.textContent=d.toFixed(1);
+    distEl.textContent=d.toFixed(1);
     if(userMarker) map.removeLayer(userMarker);
     userMarker=L.marker([coord.latitude,coord.longitude]).addTo(map);
-    const dentro=d<=hub.radius_m;
-    setChip(dentro?"✅ DENTRO DO RAIO":"⚠️ FORA DO RAIO", dentro?"ok":"bad");
-    cont.disabled=!dentro;
-  },()=>{setChip("Permita a localização","bad");cont.disabled=true;},{enableHighAccuracy:true});
+
+    const insideNow=d<=hub.radius_m;
+    if(insideNow){
+      chip.textContent="✅ Dentro do Raio";
+      chip.className="chip ok";
+      continueBtn.disabled=false;
+    }else{
+      chip.textContent="⚠️ Fora do Raio";
+      chip.className="chip bad";
+      continueBtn.disabled=true;
+      // Se ele sair do raio e o form estiver aberto, bloqueia de novo:
+      if(formCard.style.display==="block"){
+        alert("Você saiu do raio do HUB. O formulário foi bloqueado até retornar à área permitida.");
+        formCard.style.display="none";
+        gpsCard.style.display="block";
+      }
+    }
+  },()=>{chip.textContent="❌ Permita o GPS";chip.className="chip bad";continueBtn.disabled=true;},{enableHighAccuracy:true});
 }
 
-window.addEventListener("load",monitorGPS);
-document.getElementById("recalibrateBtn").onclick=monitorGPS;
-cont.onclick=()=>{gpsModal.style.display="none";presenceModal.style.display="flex";};
-document.getElementById("backBtn").onclick=()=>{presenceModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
-
-assignment_code.addEventListener("input",()=>{let val=assignment_code.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(val.length>1&&!val.includes("-"))val=val[0]+"-"+val.slice(1);assignment_code.value=val;});
-
-submitBtn.onclick=async()=>{  
-  if(!coord){alert("Sem coordenadas válidas.");return;}
-  const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
-  if(d>hub.radius_m){alert("Você está fora da região do HUB.");return;}
-
-  const payload={driver_id:driver_id.value.trim(),name:nameEl.value.trim(),vehicle:vehicle.value,plate:plate.value.trim().toUpperCase(),shift:shift.value,assignment_code:assignment_code.value.trim(),turno:turno.value,lat:coord.latitude,lon:coord.longitude};
-  for(const [k,v]of Object.entries(payload))if(!v){alert("Preencha todos os campos.");return;}
-
-  submitBtn.disabled=true;
-  try{
-    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const text=await res.text(); console.log("Resposta:",text);
-    let json; try{json=JSON.parse(text);}catch{json={ok:false,error:"Resposta inválida."};}
-    if(json.ok){presenceModal.style.display="none";successModal.style.display="flex";successInfo.innerHTML=`Rota <b>${payload.assignment_code}</b> • Turno ${payload.turno}`;}
-    else{alert("Falha ao registrar: "+(json.error||"Erro desconhecido."));}
-  }catch(err){alert("Falha de conexão: "+err.message);}
-  finally{submitBtn.disabled=false;}
+continueBtn.onclick=()=>{
+  gpsCard.style.display="none";
+  formCard.style.display="block";
 };
 
-document.getElementById("closeSuccess").onclick=()=>{successModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
+monitorGPS();
+
+document.getElementById("submitBtn").onclick=()=>{
+  const dados={
+    driver_id:document.getElementById("driver_id").value.trim(),
+    name:document.getElementById("name").value.trim(),
+    vehicle:document.getElementById("vehicle").value,
+    plate:document.getElementById("plate").value.trim().toUpperCase(),
+    assignment_code:document.getElementById("assignment_code").value.trim(),
+    turno:document.getElementById("turno").value,
+    lat:coord?.latitude, lon:coord?.longitude
+  };
+  for(const[k,v]of Object.entries(dados)) if(!v){alert("Preencha todos os campos.");return;}
+  document.getElementById("submitBtn").disabled=true;
+  google.script.run.withSuccessHandler(r=>{
+    document.getElementById("submitBtn").disabled=false;
+    if(r.ok){alert("✅ Presença registrada com sucesso!");location.reload();}
+    else alert("Erro: "+r.error);
+  }).withFailureHandler(e=>{
+    alert("Falha: "+e.message);
+    document.getElementById("submitBtn").disabled=false;
+  }).salvarPresenca(dados);
+};
 </script>
 </body>
 </html>
