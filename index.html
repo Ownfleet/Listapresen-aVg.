@@ -99,7 +99,7 @@ label{font-weight:700;font-size:13px;margin-top:12px;display:block;color:#e2e8f0
   </div>
 </div>
 
-<!-- MODAL 2: FORMULÁRIO -->
+<!-- MODAL 2: FORM -->
 <div id="presenceModal" class="modal-backdrop" style="display:none">
   <div class="modal">
     <h2>Registrar Presença</h2>
@@ -134,40 +134,21 @@ label{font-weight:700;font-size:13px;margin-top:12px;display:block;color:#e2e8f0
 <footer>© HUB LSP-18 VG • Sistema de presença com geofence ativo</footer>
 
 <script>
-// 🔹 CONFIGURAÇÃO
-const API_URL = "https://script.google.com/macros/s/AKfycbzE7CWdCriIWLuwIw1I1jqT8ysbpO-jMeGCtaNXTm8SLUL7X0xp2fRPgT65JsaUOJhC/exec";
-const hub = { lat: -23.443930639321323, lon: -46.52911457443008, radius_m: 250 };
+const hub = { lat:-23.443930639321323, lon:-46.52911457443008, radius_m:250 };
+const API_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://script.google.com/macros/s/AKfycbzE7CWdCriIWLuwIw1I1jqT8ysbpO-jMeGCtaNXTm8SLUL7X0xp2fRPgT65JsaUOJhC/exec");
 
-// 🔹 MAPA
-const map = L.map("map", { zoomControl: false }).setView([hub.lat, hub.lon], 18);
+const map = L.map("map",{zoomControl:false}).setView([hub.lat,hub.lon],18);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-L.marker([hub.lat, hub.lon]).addTo(map).bindPopup("📍 HUB LSP-18 VG");
-L.circle([hub.lat, hub.lon], { radius: hub.radius_m, color: "#ff6b3d", fillColor: "#ff6b3d", fillOpacity: 0.25 }).addTo(map);
+L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP-18 VG");
+L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ff6b3d",fillColor:"#ff6b3d",fillOpacity:0.25}).addTo(map);
 
-const gpsModal = document.getElementById("gpsModal"),
-      presenceModal = document.getElementById("presenceModal"),
-      successModal = document.getElementById("successModal");
-const statusChip = document.getElementById("statusChip"),
-      distanceEl = document.getElementById("distance"),
-      cont = document.getElementById("continueBtn");
-const driver_id = document.getElementById("driver_id"),
-      nameEl = document.getElementById("name"),
-      vehicle = document.getElementById("vehicle"),
-      plate = document.getElementById("plate"),
-      shift = document.getElementById("shift"),
-      assignment_code = document.getElementById("assignment_code"),
-      turno = document.getElementById("turno"),
-      submitBtn = document.getElementById("submitBtn"),
-      successInfo = document.getElementById("successInfo");
+const gpsModal=document.getElementById("gpsModal"),presenceModal=document.getElementById("presenceModal"),successModal=document.getElementById("successModal");
+const statusChip=document.getElementById("statusChip"),distanceEl=document.getElementById("distance"),cont=document.getElementById("continueBtn");
+const driver_id=document.getElementById("driver_id"),nameEl=document.getElementById("name"),vehicle=document.getElementById("vehicle"),plate=document.getElementById("plate"),shift=document.getElementById("shift"),assignment_code=document.getElementById("assignment_code"),turno=document.getElementById("turno"),submitBtn=document.getElementById("submitBtn"),successInfo=document.getElementById("successInfo");
 
-let coord = null, userMarker = null;
+let coord=null,userMarker=null;
 function toRad(v){return v*Math.PI/180;}
-function dist(lat1, lon1, lat2, lon2){
-  const R = 6371000;
-  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+function dist(lat1,lon1,lat2,lon2){const R=6371000;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 function setChip(t,c=""){statusChip.textContent=t;statusChip.className="chip "+c;}
 
 function monitorGPS(){
@@ -203,12 +184,11 @@ submitBtn.onclick=async()=>{
   submitBtn.disabled=true;
   try{
     const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const text=await res.text();
-    console.log(text);
-    presenceModal.style.display="none";
-    successModal.style.display="flex";
-    successInfo.innerHTML=`Rota <b>${payload.assignment_code}</b> • Turno ${payload.turno}`;
-  }catch(err){alert('Erro ao enviar: '+err.message);}
+    const text=await res.text(); console.log("Resposta:",text);
+    let json; try{json=JSON.parse(text);}catch{json={ok:false,error:"Resposta inválida."};}
+    if(json.ok){presenceModal.style.display="none";successModal.style.display="flex";successInfo.innerHTML=`Rota <b>${payload.assignment_code}</b> • Turno ${payload.turno}`;}
+    else{alert("Falha ao registrar: "+(json.error||"Erro desconhecido."));}
+  }catch(err){alert("Falha de conexão: "+err.message);}
   finally{submitBtn.disabled=false;}
 };
 
