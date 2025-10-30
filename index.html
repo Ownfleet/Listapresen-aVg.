@@ -110,7 +110,6 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
     </select>
     <label>Placa</label><input id="plate" placeholder="ABC1D23">
     <label>Turno</label><select id="shift"><option value="">Selecione...</option><option>AM</option><option>SD</option></select>
-    <label>Letra–Número da Rota</label><input id="assignment_code" placeholder="A-12">
     <label>Turno da Rota</label><select id="turno"><option value="">Selecione...</option><option>AM</option><option>SD</option></select>
 
     <div class="actions">
@@ -139,7 +138,6 @@ const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 const hub={lat:-23.422724170975744, lon:-46.523055269024475, radius_m:250};
 
-// ELEMENTOS
 const gpsModal=document.getElementById("gpsModal"),
       presenceModal=document.getElementById("presenceModal"),
       successModal=document.getElementById("successModal");
@@ -152,7 +150,6 @@ const driver_id=document.getElementById("driver_id"),
       vehicle=document.getElementById("vehicle"),
       plate=document.getElementById("plate"),
       shift=document.getElementById("shift"),
-      assignment_code=document.getElementById("assignment_code"),
       turno=document.getElementById("turno"),
       submitBtn=document.getElementById("submitBtn"),
       backBtn=document.getElementById("backBtn"),
@@ -213,6 +210,7 @@ submitBtn.onclick=async()=>{
   const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
   if(d>hub.radius_m)return alert("Você está fora da região do HUB.");
 
+  // Envia apenas os parâmetros que a função realmente usa
   const payload={
     p_driver_id:driver_id.value.trim(),
     p_name:nameEl.value.trim(),
@@ -221,6 +219,7 @@ submitBtn.onclick=async()=>{
     p_shift:shift.value,
     p_turno:turno.value
   };
+
   for(const [k,v] of Object.entries(payload)) if(!v)return alert("Preencha todos os campos.");
 
   submitBtn.disabled=true;
