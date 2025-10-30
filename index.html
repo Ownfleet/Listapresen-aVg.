@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>Lista de Presença • HUB LSP-18 VG</title>
 
-<!-- Fonts & Libs -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -83,9 +85,11 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
     <h2>Status de Localização</h2>
     <div class="sub">Permita o GPS. Só continua quando estiver dentro do raio.</div>
     <div id="map"></div>
+
     <div style="margin:14px 0"><span id="statusChip" class="chip pulsing">Aguardando GPS...</span></div>
     <div class="kpi"><span>Distância do HUB</span><span id="distance">–</span> m</div>
     <div class="kpi"><span>Raio permitido</span><span id="radius">250</span> m</div>
+
     <div class="actions">
       <button id="recalibrateBtn" class="btn-ghost">📍 Calibrar GPS</button>
       <button id="continueBtn" class="btn" disabled>Continuar</button>
@@ -108,6 +112,7 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
     </select>
     <label>Placa</label><input id="plate" placeholder="ABC1D23">
     <label>Turno</label><select id="shift"><option value="">Selecione...</option><option>AM</option><option>SD</option></select>
+    <label>Letra–Número da Rota</label><input id="assignment_code" maxlength="4" placeholder="A-12">
     <label>Turno da Rota</label><select id="turno"><option value="">Selecione...</option><option>AM</option><option>SD</option></select>
 
     <div class="actions">
@@ -135,51 +140,46 @@ const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 const hub={lat:-23.422724170975744, lon:-46.523055269024475, radius_m:250};
-
-const gpsModal=document.getElementById("gpsModal"),presenceModal=document.getElementById("presenceModal"),successModal=document.getElementById("successModal");
-const statusChip=document.getElementById("statusChip"),distanceEl=document.getElementById("distance"),recal=document.getElementById("recalibrateBtn"),cont=document.getElementById("continueBtn");
-const driver_id=document.getElementById("driver_id"),nameEl=document.getElementById("name"),vehicle=document.getElementById("vehicle"),plate=document.getElementById("plate"),shift=document.getElementById("shift"),turno=document.getElementById("turno"),submitBtn=document.getElementById("submitBtn"),backBtn=document.getElementById("backBtn"),successInfo=document.getElementById("successInfo"),closeSuccess=document.getElementById("closeSuccess");
-let coord=null; radius.textContent=hub.radius_m;
-
-// MAPA
 const map=L.map("map",{zoomControl:false}).setView([hub.lat,hub.lon],18);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(map);
-const hubMarker=L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP-18 VG");
-const circle=L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ee4d2d",fillColor:"#ff7b56",fillOpacity:0.25}).addTo(map);
-let userMarker=null;
+L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP-18 VG");
+L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ee4d2d",fillColor:"#ff7b56",fillOpacity:0.25}).addTo(map);
 
+const gpsModal=document.getElementById("gpsModal"),presenceModal=document.getElementById("presenceModal"),successModal=document.getElementById("successModal");
+const statusChip=document.getElementById("statusChip"),distanceEl=document.getElementById("distance"),cont=document.getElementById("continueBtn");
+const driver_id=document.getElementById("driver_id"),nameEl=document.getElementById("name"),vehicle=document.getElementById("vehicle"),plate=document.getElementById("plate"),shift=document.getElementById("shift"),assignment_code=document.getElementById("assignment_code"),turno=document.getElementById("turno"),submitBtn=document.getElementById("submitBtn"),successInfo=document.getElementById("successInfo");
+
+let coord=null,userMarker=null;
 function toRad(v){return v*Math.PI/180;}
-function dist(lat1,lon1,lat2,lon2){const R=6371000;const φ1=toRad(lat1),φ2=toRad(lat2);const Δφ=toRad(lat2-lat1),Δλ=toRad(lon2-lon1);const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));return R*c;}
+function dist(lat1,lon1,lat2,lon2){const R=6371000;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 function setChip(t,c=""){statusChip.textContent=t;statusChip.className="chip "+c;}
 
 function monitorGPS(){
   if(!navigator.geolocation){setChip("GPS não suportado","bad");return;}
   setChip("Obtendo GPS...","pulsing");
-  navigator.geolocation.watchPosition(
-    pos=>{
-      coord=pos.coords;
-      const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
-      distanceEl.textContent=d.toFixed(1);
-      if(userMarker)map.removeLayer(userMarker);
-      userMarker=L.marker([coord.latitude,coord.longitude],{title:"Você"}).addTo(map);
-      map.panTo([coord.latitude,coord.longitude]);
-      const dentro=d<=hub.radius_m;
-      if(dentro){setChip("✅ DENTRO DO RAIO","ok");cont.disabled=false;}
-      else{setChip("⚠️ FORA DO RAIO","bad");cont.disabled=true;}
-    },
-    err=>{
-      console.warn("Erro GPS:",err);
-      setChip("Permita a localização","bad");
-      cont.disabled=true;
-    },
-    {enableHighAccuracy:true,maximumAge:0,timeout:15000}
-  );
+  navigator.geolocation.watchPosition(pos=>{
+    coord=pos.coords;
+    const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
+    distanceEl.textContent=d.toFixed(1);
+    if(userMarker) map.removeLayer(userMarker);
+    userMarker=L.marker([coord.latitude,coord.longitude]).addTo(map);
+    const dentro=d<=hub.radius_m;
+    setChip(dentro?"✅ DENTRO DO RAIO":"⚠️ FORA DO RAIO", dentro?"ok":"bad");
+    cont.disabled=!dentro;
+  },()=>{setChip("Permita a localização","bad");cont.disabled=true;},{enableHighAccuracy:true});
 }
 
 window.addEventListener("load",monitorGPS);
-recal.onclick=monitorGPS;
+document.getElementById("recalibrateBtn").onclick=monitorGPS;
 cont.onclick=()=>{gpsModal.style.display="none";presenceModal.style.display="flex";};
-backBtn.onclick=()=>{presenceModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
+document.getElementById("backBtn").onclick=()=>{presenceModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
+
+// --- Adiciona traço automático após a letra
+assignment_code.addEventListener("input",()=>{
+  let val=assignment_code.value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(val.length>1 && !val.includes("-")) val=val[0]+"-"+val.slice(1);
+  assignment_code.value=val;
+});
 
 submitBtn.onclick=async()=>{
   if(!coord){alert("Sem coordenadas válidas.");return;}
@@ -196,19 +196,17 @@ submitBtn.onclick=async()=>{
     p_lat:coord.latitude,
     p_lon:coord.longitude
   };
-
   for(const [k,v] of Object.entries(payload)) if(!v)return alert("Preencha todos os campos.");
 
   submitBtn.disabled=true;
   const {error}=await client.rpc("log_presence",payload);
   submitBtn.disabled=false;
-
   if(error)return alert("Erro ao registrar: "+error.message);
 
   presenceModal.style.display="none";successModal.style.display="flex";
-  successInfo.innerHTML=`Motorista <b>${payload.p_name}</b> • Turno ${payload.p_turno}`;
+  successInfo.innerHTML=`Rota <b>${assignment_code.value}</b> • Turno ${payload.p_turno}`;
 };
-closeSuccess.onclick=()=>{successModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
+document.getElementById("closeSuccess").onclick=()=>{successModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
 </script>
 </body>
 </html>
