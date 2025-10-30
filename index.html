@@ -3,9 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
 <title>Lista de Presença • HUB LSP-18 VG</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -46,17 +43,14 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
 <body>
 <header>Lista de Presença • HUB LSP-18 VG</header>
 
-<!-- MODAL 1: GPS -->
 <div id="gpsModal" class="modal-backdrop">
   <div class="modal">
     <h2>Status de Localização</h2>
     <div class="sub">Permita o GPS. Só continua quando estiver dentro do raio.</div>
     <div id="map"></div>
-
     <div style="margin:14px 0"><span id="statusChip" class="chip pulsing">Aguardando GPS...</span></div>
     <div class="kpi"><span>Distância do HUB</span><span id="distance">–</span> m</div>
     <div class="kpi"><span>Raio permitido</span><span id="radius">250</span> m</div>
-
     <div class="actions">
       <button id="recalibrateBtn" class="btn-ghost">📍 Calibrar GPS</button>
       <button id="continueBtn" class="btn" disabled>Continuar</button>
@@ -64,7 +58,6 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
   </div>
 </div>
 
-<!-- MODAL 2: PRESENÇA -->
 <div id="presenceModal" class="modal-backdrop" style="display:none">
   <div class="modal">
     <h2>Registrar Presença</h2>
@@ -74,8 +67,7 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
     <label>Nome Completo</label><input id="name">
     <label>Veículo</label>
     <select id="vehicle">
-      <option value="">Selecione...</option>
-      <option>Moto</option><option>Passeio</option><option>Fiorino</option><option>Van</option><option>Outro</option>
+      <option value="">Selecione...</option><option>Moto</option><option>Passeio</option><option>Fiorino</option><option>Van</option><option>Outro</option>
     </select>
     <label>Placa</label><input id="plate" placeholder="ABC1D23">
     <label>Turno</label><select id="shift"><option value="">Selecione...</option><option>AM</option><option>SD</option></select>
@@ -89,7 +81,6 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
   </div>
 </div>
 
-<!-- MODAL 3: SUCESSO -->
 <div id="successModal" class="modal-backdrop" style="display:none">
   <div class="modal success">
     <div class="check">✓</div>
@@ -102,43 +93,21 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
 <footer>© HUB LSP-18 VG • Geofence ativo</footer>
 
 <script>
-/* ===================== CONFIG ===================== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzE7CWdCriIWLuwIw1I1jqT8ysbpO-jMeGCtaNXTm8SLUL7X0xp2fRPgT65JsaUOJhC/exec'; // <<<<<<<<<<<<<<
+const API_URL = 'https://script.google.com/macros/s/AKfycbzE7CWdCriIWLuwIw1I1jqT8ysbpO-jMeGCtaNXTm8SLUL7X0xp2fRPgT65JsaUOJhC/exec';
+const hub = { lat:-23.444026626026627, lon:-46.52912530088627, radius_m:250 };
 
-/* Geofence do HUB (mesmos valores do Apps Script) */
-const hub = { lat:-23.422724170975744, lon:-46.523055269024475, radius_m:250 };
-
-/* ===================== MAPA / GPS ===================== */
 const map = L.map("map",{zoomControl:false}).setView([hub.lat,hub.lon],18);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(map);
 L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP-18 VG");
 L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ee4d2d",fillColor:"#ff7b56",fillOpacity:0.25}).addTo(map);
 
-const gpsModal=document.getElementById("gpsModal"),
-      presenceModal=document.getElementById("presenceModal"),
-      successModal=document.getElementById("successModal");
-const statusChip=document.getElementById("statusChip"),
-      distanceEl=document.getElementById("distance"),
-      cont=document.getElementById("continueBtn");
+const gpsModal=document.getElementById("gpsModal"),presenceModal=document.getElementById("presenceModal"),successModal=document.getElementById("successModal");
+const statusChip=document.getElementById("statusChip"),distanceEl=document.getElementById("distance"),cont=document.getElementById("continueBtn");
+const driver_id=document.getElementById("driver_id"),nameEl=document.getElementById("name"),vehicle=document.getElementById("vehicle"),plate=document.getElementById("plate"),shift=document.getElementById("shift"),assignment_code=document.getElementById("assignment_code"),turno=document.getElementById("turno"),submitBtn=document.getElementById("submitBtn"),successInfo=document.getElementById("successInfo");
 
-const driver_id=document.getElementById("driver_id"),
-      nameEl=document.getElementById("name"),
-      vehicle=document.getElementById("vehicle"),
-      plate=document.getElementById("plate"),
-      shift=document.getElementById("shift"),
-      assignment_code=document.getElementById("assignment_code"),
-      turno=document.getElementById("turno"),
-      submitBtn=document.getElementById("submitBtn"),
-      successInfo=document.getElementById("successInfo");
-
-let coord=null, userMarker=null;
+let coord=null,userMarker=null;
 function toRad(v){return v*Math.PI/180;}
-function dist(lat1,lon1,lat2,lon2){
-  const R=6371000;
-  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
-  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
+function dist(lat1,lon1,lat2,lon2){const R=6371000;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 function setChip(t,c=""){statusChip.textContent=t;statusChip.className="chip "+c;}
 
 function monitorGPS(){
@@ -161,50 +130,25 @@ document.getElementById("recalibrateBtn").onclick=monitorGPS;
 cont.onclick=()=>{gpsModal.style.display="none";presenceModal.style.display="flex";};
 document.getElementById("backBtn").onclick=()=>{presenceModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
 
-/* Traço automático em A-12 */
-assignment_code.addEventListener("input",()=>{
-  let val=assignment_code.value.toUpperCase().replace(/[^A-Z0-9]/g,"");
-  if(val.length>1 && !val.includes("-")) val=val[0]+"-"+val.slice(1);
-  assignment_code.value=val;
-});
+assignment_code.addEventListener("input",()=>{let val=assignment_code.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(val.length>1&&!val.includes("-"))val=val[0]+"-"+val.slice(1);assignment_code.value=val;});
 
-/* ===================== SUBMIT PARA GOOGLE SHEETS ===================== */
 submitBtn.onclick=async()=>{
   if(!coord){alert("Sem coordenadas válidas.");return;}
   const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
   if(d>hub.radius_m){alert("Você está fora da região do HUB.");return;}
 
-  const payload={
-    driver_id: driver_id.value.trim(),
-    name: nameEl.value.trim(),
-    vehicle: vehicle.value,
-    plate: plate.value.trim().toUpperCase(),
-    shift: shift.value,
-    assignment_code: assignment_code.value.trim(),
-    turno: turno.value,
-    lat: coord.latitude,
-    lon: coord.longitude
-  };
-  for(const [k,v] of Object.entries(payload)){ if(!v){ alert("Preencha todos os campos."); return; } }
+  const payload={driver_id:driver_id.value.trim(),name:nameEl.value.trim(),vehicle:vehicle.value,plate:plate.value.trim().toUpperCase(),shift:shift.value,assignment_code:assignment_code.value.trim(),turno:turno.value,lat:coord.latitude,lon:coord.longitude};
+  for(const [k,v]of Object.entries(payload))if(!v){alert("Preencha todos os campos.");return;}
 
   submitBtn.disabled=true;
   try{
-    const res = await fetch(API_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const json = await res.json();
-    if(!json.ok){ throw new Error(json.error || 'Falha ao registrar'); }
-
-    presenceModal.style.display="none";
-    successModal.style.display="flex";
-    successInfo.innerHTML = `Rota <b>${payload.assignment_code}</b> • Turno ${payload.turno} • Dist.: ${json.distance_m} m`;
-  }catch(err){
-    alert('Erro: '+err.message);
-  }finally{
-    submitBtn.disabled=false;
-  }
+    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const json=await res.json();
+    if(!json.ok)throw new Error(json.error||'Falha ao registrar');
+    presenceModal.style.display="none";successModal.style.display="flex";
+    successInfo.innerHTML=`Rota <b>${payload.assignment_code}</b> • Turno ${payload.turno} • Dist.: ${json.distance_m} m`;
+  }catch(err){alert('Erro: '+err.message);}
+  finally{submitBtn.disabled=false;}
 };
 document.getElementById("closeSuccess").onclick=()=>{successModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
 </script>
