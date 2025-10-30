@@ -83,11 +83,9 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
     <h2>Status de Localização</h2>
     <div class="sub">Permita o GPS. Só continua quando estiver dentro do raio.</div>
     <div id="map"></div>
-
     <div style="margin:14px 0"><span id="statusChip" class="chip pulsing">Aguardando GPS...</span></div>
     <div class="kpi"><span>Distância do HUB</span><span id="distance">–</span> m</div>
     <div class="kpi"><span>Raio permitido</span><span id="radius">250</span> m</div>
-
     <div class="actions">
       <button id="recalibrateBtn" class="btn-ghost">📍 Calibrar GPS</button>
       <button id="continueBtn" class="btn" disabled>Continuar</button>
@@ -198,11 +196,13 @@ submitBtn.onclick=async()=>{
     p_lat:coord.latitude,
     p_lon:coord.longitude
   };
+
   for(const [k,v] of Object.entries(payload)) if(!v)return alert("Preencha todos os campos.");
 
   submitBtn.disabled=true;
   const {error}=await client.rpc("log_presence",payload);
   submitBtn.disabled=false;
+
   if(error)return alert("Erro ao registrar: "+error.message);
 
   presenceModal.style.display="none";successModal.style.display="flex";
