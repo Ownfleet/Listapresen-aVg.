@@ -138,24 +138,9 @@ const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 const hub={lat:-23.422724170975744, lon:-46.523055269024475, radius_m:250};
 
-const gpsModal=document.getElementById("gpsModal"),
-      presenceModal=document.getElementById("presenceModal"),
-      successModal=document.getElementById("successModal");
-const statusChip=document.getElementById("statusChip"),
-      distanceEl=document.getElementById("distance"),
-      recal=document.getElementById("recalibrateBtn"),
-      cont=document.getElementById("continueBtn");
-const driver_id=document.getElementById("driver_id"),
-      nameEl=document.getElementById("name"),
-      vehicle=document.getElementById("vehicle"),
-      plate=document.getElementById("plate"),
-      shift=document.getElementById("shift"),
-      turno=document.getElementById("turno"),
-      submitBtn=document.getElementById("submitBtn"),
-      backBtn=document.getElementById("backBtn"),
-      successInfo=document.getElementById("successInfo"),
-      closeSuccess=document.getElementById("closeSuccess");
-
+const gpsModal=document.getElementById("gpsModal"),presenceModal=document.getElementById("presenceModal"),successModal=document.getElementById("successModal");
+const statusChip=document.getElementById("statusChip"),distanceEl=document.getElementById("distance"),recal=document.getElementById("recalibrateBtn"),cont=document.getElementById("continueBtn");
+const driver_id=document.getElementById("driver_id"),nameEl=document.getElementById("name"),vehicle=document.getElementById("vehicle"),plate=document.getElementById("plate"),shift=document.getElementById("shift"),turno=document.getElementById("turno"),submitBtn=document.getElementById("submitBtn"),backBtn=document.getElementById("backBtn"),successInfo=document.getElementById("successInfo"),closeSuccess=document.getElementById("closeSuccess");
 let coord=null; radius.textContent=hub.radius_m;
 
 // MAPA
@@ -166,14 +151,7 @@ const circle=L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ee4d2d",fil
 let userMarker=null;
 
 function toRad(v){return v*Math.PI/180;}
-function dist(lat1,lon1,lat2,lon2){
-  const R=6371000;
-  const φ1=toRad(lat1),φ2=toRad(lat2);
-  const Δφ=toRad(lat2-lat1),Δλ=toRad(lon2-lon1);
-  const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
-  const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-  return R*c;
-}
+function dist(lat1,lon1,lat2,lon2){const R=6371000;const φ1=toRad(lat1),φ2=toRad(lat2);const Δφ=toRad(lat2-lat1),Δλ=toRad(lon2-lon1);const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));return R*c;}
 function setChip(t,c=""){statusChip.textContent=t;statusChip.className="chip "+c;}
 
 function monitorGPS(){
@@ -210,16 +188,16 @@ submitBtn.onclick=async()=>{
   const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
   if(d>hub.radius_m)return alert("Você está fora da região do HUB.");
 
-  // Envia apenas os parâmetros que a função realmente usa
   const payload={
     p_driver_id:driver_id.value.trim(),
     p_name:nameEl.value.trim(),
     p_vehicle:vehicle.value,
     p_plate:plate.value.trim().toUpperCase(),
     p_shift:shift.value,
-    p_turno:turno.value
+    p_turno:turno.value,
+    p_lat:coord.latitude,
+    p_lon:coord.longitude
   };
-
   for(const [k,v] of Object.entries(payload)) if(!v)return alert("Preencha todos os campos.");
 
   submitBtn.disabled=true;
@@ -227,11 +205,9 @@ submitBtn.onclick=async()=>{
   submitBtn.disabled=false;
   if(error)return alert("Erro ao registrar: "+error.message);
 
-  presenceModal.style.display="none";
-  successModal.style.display="flex";
+  presenceModal.style.display="none";successModal.style.display="flex";
   successInfo.innerHTML=`Motorista <b>${payload.p_name}</b> • Turno ${payload.p_turno}`;
 };
-
 closeSuccess.onclick=()=>{successModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
 </script>
 </body>
