@@ -10,65 +10,113 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-:root{--brand:#ee4d2d;--brand2:#ff6b3d;--ink:#0f172a;--muted:#6b7280;--glass:rgba(255,255,255,.86);--radius:20px;--shadow:0 30px 80px rgba(238,77,45,.22),0 10px 24px rgba(15,23,42,.06)}
-*{box-sizing:border-box}
-body{margin:0;font-family:"Plus Jakarta Sans",system-ui,Arial;color:var(--ink);
-  background:radial-gradient(1000px 600px at 80% -10%,#ffd9ce 0,transparent 60%),linear-gradient(145deg,#fff7f5,#ffe6de);min-height:100vh;overflow:hidden}
-header{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;text-align:center;padding:18px;font-weight:800;letter-spacing:.3px;box-shadow:0 8px 20px rgba(238,77,45,.25)}
-footer{text-align:center;padding:10px;font-size:12px;color:var(--muted)}
-.modal-backdrop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(70vw 70vh at 50% -10%,rgba(238,77,45,.2),transparent 60%),rgba(15,23,42,.25);backdrop-filter:blur(6px);z-index:100}
-.modal{width:min(94vw,600px);background:var(--glass);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;animation:fadeIn .3s ease-out both}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-h2{margin:0 0 8px;color:var(--brand);font-weight:800}
-.sub{color:var(--muted);font-size:13px;margin-bottom:12px}
-.kpi{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f1f1}
-.btn{padding:12px 18px;border:0;border-radius:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;box-shadow:0 10px 20px rgba(238,77,45,.25);transition:.15s}
-.btn:hover{transform:translateY(-1px);box-shadow:0 14px 26px rgba(238,77,45,.35)}
-.btn:disabled{opacity:.6;cursor:not-allowed}
-.btn-ghost{background:#fff;color:#c2410c;border:1.5px solid #ffd0c4}
-.chip{padding:8px 10px;border-radius:999px;font-weight:800;font-size:12px;letter-spacing:.3px;background:#fff1ed;color:#d64a28;border:1px dashed #ffb19b}
-.ok{background:#ecfdf5;color:#065f46;border-color:#bbf7d0}
-.bad{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+:root{
+  --brand:#ee4d2d;--brand2:#ff6b3d;--ink:#0f172a;--muted:#9ca3af;
+  --bg:#0b0f19;--glass:rgba(255,255,255,.12);
+  --neon:0 0 12px #ff6b3d, 0 0 32px #ff6b3d;
+  --radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Plus Jakarta Sans",system-ui,Arial;
+  background:radial-gradient(900px 600px at 70% -20%,rgba(255,107,61,.15) 0,transparent 70%),linear-gradient(145deg,#0a0e1a,#141d26);
+  color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;
+}
+header{
+  position:fixed;top:0;left:0;right:0;text-align:center;
+  background:linear-gradient(90deg,#ee4d2d,#ff6b3d,#ee4d2d);
+  padding:14px;font-weight:800;letter-spacing:.5px;
+  color:#fff;text-shadow:0 0 10px rgba(255,255,255,.4);
+  box-shadow:0 0 18px rgba(238,77,45,.4);
+}
+footer{
+  position:fixed;bottom:8px;width:100%;text-align:center;font-size:12px;color:#aaa;
+}
+.modal-backdrop{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(10px);z-index:100;
+}
+.modal{
+  width:min(92vw,520px);
+  background:var(--glass);
+  border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,.08);
+  padding:26px;
+  box-shadow:0 0 30px rgba(238,77,45,.25),inset 0 0 12px rgba(255,255,255,.06);
+  animation:fadeIn .4s ease-out both;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+h2{margin-bottom:6px;color:#fff;font-weight:800;text-shadow:var(--neon);}
+.sub{color:#cbd5e1;font-size:13px;margin-bottom:14px}
+.kpi{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.btn{
+  padding:12px 18px;border:0;border-radius:var(--radius);font-weight:800;
+  background:linear-gradient(135deg,#ff6b3d,#ee4d2d);
+  color:#fff;cursor:pointer;
+  box-shadow:0 0 12px rgba(238,77,45,.4);transition:.2s;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(255,107,61,.6)}
+.btn-ghost{
+  background:rgba(255,255,255,.05);color:#ff6b3d;
+  border:1.5px solid rgba(255,107,61,.4);
+}
+.btn-ghost:hover{background:rgba(255,107,61,.15);}
+.chip{
+  padding:8px 12px;border-radius:999px;font-weight:800;font-size:13px;
+  border:1px dashed rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.5px;
+}
+.ok{color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)}
+.bad{color:#f87171;background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.3)}
 #map{height:220px;margin:10px 0;border-radius:14px;overflow:hidden}
-input,select{width:100%;padding:12px 14px;border:1.6px solid #e5e7eb;border-radius:14px;font:inherit;background:#fff;transition:border .2s,box-shadow .2s}
-input:focus,select:focus{border-color:var(--brand);box-shadow:0 0 0 3px #ffe2d9}
-label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151}
-.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+input,select{
+  width:100%;padding:12px 14px;margin-top:10px;
+  border:1.6px solid rgba(255,255,255,.1);border-radius:14px;
+  background:rgba(255,255,255,.05);color:#fff;
+  font:inherit;transition:border .2s,box-shadow .2s;
+}
+input:focus,select:focus{border-color:#ff6b3d;box-shadow:0 0 0 3px rgba(255,107,61,.3);outline:none}
+label{font-weight:700;font-size:13px;margin-top:12px;display:block;color:#e2e8f0}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 .success{text-align:center;padding:30px}
-.success .check{width:90px;height:90px;margin:0 auto 12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-radius:50%;font-size:38px;display:grid;place-items:center;box-shadow:0 12px 26px rgba(34,197,94,.35)}
+.success .check{
+  width:90px;height:90px;margin:0 auto 12px;
+  background:linear-gradient(135deg,#16a34a,#22c55e);
+  border-radius:50%;font-size:38px;display:grid;place-items:center;
+  color:#fff;box-shadow:0 0 20px rgba(16,185,129,.5);
+}
 .pulsing{animation:pulse 1.4s ease-in-out infinite}
-@keyframes pulse{0%{opacity:.8}50%{opacity:.4}100%{opacity:.8}}
+@keyframes pulse{0%,100%{opacity:.8}50%{opacity:.4}}
 </style>
 </head>
 <body>
 <header>Lista de Presença • HUB LSP-18 VG</header>
 
+<!-- MODAL GPS -->
 <div id="gpsModal" class="modal-backdrop">
   <div class="modal">
     <h2>Status de Localização</h2>
-    <div class="sub">Permita o GPS. Só continua quando estiver dentro do raio.</div>
+    <div class="sub">Permita o GPS — só continua quando estiver dentro do raio autorizado.</div>
     <div id="map"></div>
     <div style="margin:14px 0"><span id="statusChip" class="chip pulsing">Aguardando GPS...</span></div>
     <div class="kpi"><span>Distância do HUB</span><span id="distance">–</span> m</div>
     <div class="kpi"><span>Raio permitido</span><span id="radius">250</span> m</div>
     <div class="actions">
-      <button id="recalibrateBtn" class="btn-ghost">📍 Calibrar GPS</button>
+      <button id="recalibrateBtn" class="btn-ghost">📡 Calibrar</button>
       <button id="continueBtn" class="btn" disabled>Continuar</button>
     </div>
   </div>
 </div>
 
+<!-- MODAL FORM -->
 <div id="presenceModal" class="modal-backdrop" style="display:none">
   <div class="modal">
     <h2>Registrar Presença</h2>
-    <div class="sub">Preencha seus dados corretamente.</div>
+    <div class="sub">Confirme seus dados para registrar no sistema.</div>
 
     <label>ID do Motorista</label><input id="driver_id" placeholder="Ex: 000123">
     <label>Nome Completo</label><input id="name">
     <label>Veículo</label>
-    <select id="vehicle">
-      <option value="">Selecione...</option><option>Moto</option><option>Passeio</option><option>Fiorino</option><option>Van</option><option>Outro</option>
-    </select>
+    <select id="vehicle"><option value="">Selecione...</option><option>Moto</option><option>Passeio</option><option>Fiorino</option><option>Van</option><option>Outro</option></select>
     <label>Placa</label><input id="plate" placeholder="ABC1D23">
     <label>Turno</label><select id="shift"><option value="">Selecione...</option><option>AM</option><option>SD</option></select>
     <label>Letra–Número da Rota</label><input id="assignment_code" maxlength="4" placeholder="A-12">
@@ -76,30 +124,31 @@ label{font-weight:700;font-size:13px;margin-top:10px;display:block;color:#374151
 
     <div class="actions">
       <button id="backBtn" class="btn-ghost">Voltar</button>
-      <button id="submitBtn" class="btn">Registrar Presença ✅</button>
+      <button id="submitBtn" class="btn">Registrar ✅</button>
     </div>
   </div>
 </div>
 
+<!-- MODAL SUCESSO -->
 <div id="successModal" class="modal-backdrop" style="display:none">
   <div class="modal success">
     <div class="check">✓</div>
-    <h2 style="color:#065f46">Presença registrada!</h2>
+    <h2>Presença registrada!</h2>
     <p id="successInfo" class="sub"></p>
     <button id="closeSuccess" class="btn">Fechar</button>
   </div>
 </div>
 
-<footer>© HUB LSP-18 VG • Geofence ativo</footer>
+<footer>© HUB LSP-18 VG • Sistema de presença com geofence ativo</footer>
 
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbzE7CWdCriIWLuwIw1I1jqT8ysbpO-jMeGCtaNXTm8SLUL7X0xp2fRPgT65JsaUOJhC/exec';
-const hub = { lat:-23.444026626026627, lon:-46.52912530088627, radius_m:250 };
+const API_URL = 'COLE_AQUI_A_URL_DO_WEB_APP';
+const hub = { lat:-23.443930639321323, lon:-46.52911457443008, radius_m:250 };
 
 const map = L.map("map",{zoomControl:false}).setView([hub.lat,hub.lon],18);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(map);
 L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP-18 VG");
-L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ee4d2d",fillColor:"#ff7b56",fillOpacity:0.25}).addTo(map);
+L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ff6b3d",fillColor:"#ff6b3d",fillOpacity:0.25}).addTo(map);
 
 const gpsModal=document.getElementById("gpsModal"),presenceModal=document.getElementById("presenceModal"),successModal=document.getElementById("successModal");
 const statusChip=document.getElementById("statusChip"),distanceEl=document.getElementById("distance"),cont=document.getElementById("continueBtn");
