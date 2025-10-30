@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lista de Presença • HUB LSP-18 VG</title>
 
+<!-- Estilos -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 :root{
-  --brand:#ee4d2d;--brand2:#ff6b3d;--ink:#0f172a;--muted:#9ca3af;
-  --bg:#0b0f19;--glass:rgba(255,255,255,.12);
-  --neon:0 0 12px #ff6b3d, 0 0 32px #ff6b3d;
-  --radius:18px;
+  --brand:#ee4d2d;--brand2:#ff6b3d;--ink:#f1f5f9;--muted:#94a3b8;
+  --bg:#0b0f19;--glass:rgba(255,255,255,.08);
+  --radius:18px;--neon:0 0 16px #ff6b3d,0 0 32px #ee4d2d;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:"Plus Jakarta Sans",system-ui,Arial;
   background:radial-gradient(900px 600px at 70% -20%,rgba(255,107,61,.15) 0,transparent 70%),linear-gradient(145deg,#0a0e1a,#141d26);
-  color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;
+  color:var(--ink);display:flex;justify-content:center;align-items:center;min-height:100vh;
 }
 header{
   position:fixed;top:0;left:0;right:0;text-align:center;
@@ -37,11 +37,8 @@ footer{
   background:rgba(0,0,0,.65);backdrop-filter:blur(10px);z-index:100;
 }
 .modal{
-  width:min(92vw,520px);
-  background:var(--glass);
-  border-radius:var(--radius);
-  border:1px solid rgba(255,255,255,.08);
-  padding:26px;
+  width:min(92vw,520px);background:var(--glass);border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,.1);padding:26px;
   box-shadow:0 0 30px rgba(238,77,45,.25),inset 0 0 12px rgba(255,255,255,.06);
   animation:fadeIn .4s ease-out both;
 }
@@ -56,11 +53,7 @@ h2{margin-bottom:6px;color:#fff;font-weight:800;text-shadow:var(--neon);}
   box-shadow:0 0 12px rgba(238,77,45,.4);transition:.2s;
 }
 .btn:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(255,107,61,.6)}
-.btn-ghost{
-  background:rgba(255,255,255,.05);color:#ff6b3d;
-  border:1.5px solid rgba(255,107,61,.4);
-}
-.btn-ghost:hover{background:rgba(255,107,61,.15);}
+.btn-ghost{background:rgba(255,255,255,.05);color:#ff6b3d;border:1.5px solid rgba(255,107,61,.4);}
 .chip{
   padding:8px 12px;border-radius:999px;font-weight:800;font-size:13px;
   border:1px dashed rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.5px;
@@ -79,10 +72,9 @@ label{font-weight:700;font-size:13px;margin-top:12px;display:block;color:#e2e8f0
 .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 .success{text-align:center;padding:30px}
 .success .check{
-  width:90px;height:90px;margin:0 auto 12px;
-  background:linear-gradient(135deg,#16a34a,#22c55e);
-  border-radius:50%;font-size:38px;display:grid;place-items:center;
-  color:#fff;box-shadow:0 0 20px rgba(16,185,129,.5);
+  width:90px;height:90px;margin:0 auto 12px;background:linear-gradient(135deg,#16a34a,#22c55e);
+  border-radius:50%;font-size:38px;display:grid;place-items:center;color:#fff;
+  box-shadow:0 0 20px rgba(16,185,129,.5);
 }
 .pulsing{animation:pulse 1.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.8}50%{opacity:.4}}
@@ -142,9 +134,11 @@ label{font-weight:700;font-size:13px;margin-top:12px;display:block;color:#e2e8f0
 <footer>© HUB LSP-18 VG • Sistema de presença com geofence ativo</footer>
 
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbzE7CWdCriIWLuwIw1I1jqT8ysbpO-jMeGCtaNXTm8SLUL7X0xp2fRPgT65JsaUOJhC/exec';
+// 🔹 CONFIGURAÇÃO DO SCRIPT
+const API_URL = 'https://corsproxy.io/?' + encodeURIComponent('https://script.google.com/macros/s/AKfycbzE7CWdCriIWLuwIw1I1jqT8ysbpO-jMeGCtaNXTm8SLUL7X0xp2fRPgT65JsaUOJhC/exec');
 const hub = { lat:-23.443930639321323, lon:-46.52911457443008, radius_m:250 };
 
+// 🔹 MAPA
 const map = L.map("map",{zoomControl:false}).setView([hub.lat,hub.lon],18);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(map);
 L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP-18 VG");
@@ -181,26 +175,34 @@ document.getElementById("backBtn").onclick=()=>{presenceModal.style.display="non
 
 assignment_code.addEventListener("input",()=>{let val=assignment_code.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(val.length>1&&!val.includes("-"))val=val[0]+"-"+val.slice(1);assignment_code.value=val;});
 
-submitBtn.onclick=async()=>{
+submitBtn.onclick=async()=>{  
   if(!coord){alert("Sem coordenadas válidas.");return;}
   const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
   if(d>hub.radius_m){alert("Você está fora da região do HUB.");return;}
 
-  const payload={driver_id:driver_id.value.trim(),name:nameEl.value.trim(),vehicle:vehicle.value,plate:plate.value.trim().toUpperCase(),shift:shift.value,assignment_code:assignment_code.value.trim(),turno:turno.value,lat:coord.latitude,lon:coord.longitude};
+  const payload={
+    driver_id:driver_id.value.trim(),name:nameEl.value.trim(),vehicle:vehicle.value,
+    plate:plate.value.trim().toUpperCase(),shift:shift.value,
+    assignment_code:assignment_code.value.trim(),turno:turno.value,
+    lat:coord.latitude,lon:coord.longitude
+  };
   for(const [k,v]of Object.entries(payload))if(!v){alert("Preencha todos os campos.");return;}
 
   submitBtn.disabled=true;
   try{
-    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const res=await fetch(API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
     const json=await res.json();
-    if(!json.ok)throw new Error(json.error||'Falha ao registrar');
-    presenceModal.style.display="none";successModal.style.display="flex";
-    successInfo.innerHTML=`Rota <b>${payload.assignment_code}</b> • Turno ${payload.turno} • Dist.: ${json.distance_m} m`;
-  }catch(err){alert('Erro: '+err.message);}
+    presenceModal.style.display="none";
+    successModal.style.display="flex";
+    successInfo.innerHTML=`Rota <b>${payload.assignment_code}</b> • Turno ${payload.turno}`;
+  }catch(err){alert('Erro ao enviar: '+err.message);}
   finally{submitBtn.disabled=false;}
 };
 document.getElementById("closeSuccess").onclick=()=>{successModal.style.display="none";gpsModal.style.display="flex";monitorGPS();};
 </script>
 </body>
 </html>
-
