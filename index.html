@@ -849,22 +849,22 @@
         const hora = new Date().toLocaleTimeString("pt-BR");
 
         await addDoc(collection(db, "presencas"), {
-          uid: user.uid,
+  uid: user.uid,
 
-          // dados fixos (copiados para o painel)
-          driver_id: motoristaCache.driver_id,
-          nome: motoristaCache.nome,
-          telefone: motoristaCache.telefone,
-          tipo_veiculo: motoristaCache.tipo_veiculo,
-          placa: motoristaCache.placa,
+  driver_id: motoristaCache.driver_id,
+  nome: motoristaCache.nome,
+  telefone: motoristaCache.telefone,
+  tipo_veiculo: motoristaCache.tipo_veiculo,
+  placa: motoristaCache.placa,
 
-          // dados do dia
-          turno,
-          rota,
-          data_dia: hoje,
-          hora,
-          registrado_em: serverTimestamp()
-        });
+  turno,
+  rota,
+
+  // ✅ PADRÃO DO PAINEL
+  criado_em: serverTimestamp(),   // 👈 ESSENCIAL
+  data_dia: hoje,
+  hora
+});
 
         toast("ok", "Presença registrada", `Tudo certo ✅ Turno ${turno} • Rota ${rota}`);
         $("rota").value = "";
