@@ -451,27 +451,22 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+   import { 
+  getFirestore, collection, getDocs, query, where, Timestamp,
+  doc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     /************************************************************
      * 1) COLE AQUI SEU firebaseConfig (Firebase Console > Config)
      ************************************************************/
     const firebaseConfig = {
-    apiKey: "AIzaSyCiW72I3-AGGVLhxWcCca_5fpvA9ebV8Yk",
-    authDomain: "presenca-motoristas-vg.firebaseapp.com",
-    projectId: "presenca-motoristas-vg",
-    storageBucket: "presenca-motoristas-vg.firebasestorage.app",
-    messagingSenderId: "826408940490",
-    appId: "1:826408940490:web:6884682bf474ca6eec1533",
-    measurementId: "G-SEGE1SVEWM"
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_AUTH_DOMAIN",
+      projectId: "SEU_PROJECT_ID",
+      storageBucket: "SEU_BUCKET",
+      messagingSenderId: "SEU_SENDER_ID",
+      appId: "SEU_APP_ID"
     };
-
-    /************************************************************
-     * 2) DEFINA QUEM PODE VER O PAINEL (admins)
-     ************************************************************/
-    const ADMINS = [
-      "richard.monteiro@shopee.com" // <- deixe o seu aqui e pode adicionar outros
-    ];
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -682,16 +677,19 @@
         setLoading(false);
       }
     }
+    async function isAdmin(user){
+  if(!user?.email) return false;
 
-    // ===== Auth / Admin gate =====
-    function computeIsAdmin(user){
-      const email = (user?.email || "").toLowerCase().trim();
-      return ADMINS.map(e=>e.toLowerCase().trim()).includes(email);
-    }
+  const email = user.email.toLowerCase().trim();
+  const ref = doc(db, "admins", email);
+  const snap = await getDoc(ref);
 
-    onAuthStateChanged(auth, (user) => {
-      CURRENT_USER = user || null;
-      IS_ADMIN = computeIsAdmin(CURRENT_USER);
+  return snap.exists() && snap.data()?.ativo === true;
+}
+
+    onAuthStateChanged(auth, async (user) => {
+  CURRENT_USER = user || null;
+  IS_ADMIN = await isAdmin(CURRENT_USER);
 
       if(!CURRENT_USER){
         userName.textContent = "—";
