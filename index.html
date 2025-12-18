@@ -1,23 +1,483 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="color-scheme" content="dark">
   <title>Presença • Motorista</title>
 
-  <!-- Firebase CDN -->
+  <style>
+    :root{
+      --bg:#0b0f16;
+      --bg2:#0f1522;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.09);
+      --line: rgba(255,255,255,.10);
+      --txt:#e9eefc;
+      --muted:#a7b0c3;
+      --danger:#ff4d4d;
+      --warn:#ffb020;
+      --ok:#31d07f;
+      --brand:#ff5a2a;
+      --brand2:#ff7a3f;
+      --shadow: 0 18px 45px rgba(0,0,0,.55);
+      --shadow2: 0 10px 25px rgba(0,0,0,.42);
+      --radius: 20px;
+      --radius2: 14px;
+      --tap: 54px;
+      --focus: 0 0 0 4px rgba(255,90,42,.22);
+      --fs: 16px;
+    }
+
+    html{ font-size: var(--fs); }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      color:var(--txt);
+      background:
+        radial-gradient(1000px 500px at 10% -10%, rgba(255,90,42,.25), transparent 55%),
+        radial-gradient(900px 520px at 110% 10%, rgba(49,208,127,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* subtle grain */
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      background-image:
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+      opacity:.08;
+      pointer-events:none;
+      mix-blend-mode: overlay;
+    }
+
+    a{ color:inherit; }
+
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 14px 30px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      position:sticky;
+      top:0;
+      z-index:10;
+      padding: 10px 0 14px;
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      min-width: 0;
+    }
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      box-shadow: 0 10px 22px rgba(255,90,42,.28);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo:after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+      transform: rotate(25deg);
+      animation: shine 3.6s ease-in-out infinite;
+      opacity:.55;
+    }
+    @keyframes shine{
+      0%{ transform: translateX(-30%) rotate(25deg); }
+      55%{ transform: translateX(70%) rotate(25deg); }
+      100%{ transform: translateX(70%) rotate(25deg); }
+    }
+
+    .brand h1{
+      font-size: 1.05rem;
+      margin:0;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand p{
+      margin:2px 0 0;
+      font-size:.86rem;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .actions{
+      display:flex; align-items:center; gap:10px;
+      flex-wrap:nowrap;
+    }
+
+    .zoom{
+      display:flex; align-items:center; gap:8px;
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px;
+      box-shadow: var(--shadow2);
+    }
+    .zbtn{
+      width: 42px; height: 42px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--txt);
+      font-weight: 800;
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+      touch-action: manipulation;
+    }
+    .zbtn:active{ transform: scale(.96); }
+    .zbtn:hover{ background: rgba(255,255,255,.08); }
+    .zbtn:focus{ outline:none; box-shadow: var(--focus); border-color: rgba(255,90,42,.35); }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .9rem;
+      box-shadow: var(--shadow2);
+      white-space: nowrap;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 6px;
+    }
+    @media(min-width: 860px){
+      .grid{
+        grid-template-columns: 1.2fr .8fr;
+        gap: 16px;
+      }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.05));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .cardHeader{
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .cardHeader .title{
+      margin:0;
+      font-size: 1.05rem;
+      letter-spacing:.2px;
+    }
+    .cardHeader .sub{
+      margin:4px 0 0;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.3;
+    }
+
+    .cardBody{
+      padding: 14px 16px 16px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media(max-width:420px){
+      .two{ grid-template-columns: 1fr; }
+    }
+
+    label{
+      display:block;
+      font-size: .88rem;
+      color: var(--muted);
+      margin: 0 0 6px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+    }
+
+    input, select{
+      width:100%;
+      height: var(--tap);
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(10,13,20,.55);
+      color: var(--txt);
+      outline:none;
+      transition: border-color .2s ease, box-shadow .2s ease, transform .12s ease;
+    }
+    input::placeholder{ color: rgba(167,176,195,.65); }
+    input:focus, select:focus{
+      box-shadow: var(--focus);
+      border-color: rgba(255,90,42,.40);
+    }
+
+    .btn{
+      height: var(--tap);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      color:#111;
+      font-weight: 900;
+      letter-spacing:.2px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      box-shadow: 0 14px 32px rgba(255,90,42,.25);
+      transition: transform .12s ease, filter .2s ease, opacity .2s ease;
+      touch-action: manipulation;
+    }
+    .btn:hover{ filter: brightness(1.02); }
+    .btn:active{ transform: scale(.98); }
+    .btn:focus{ outline:none; box-shadow: var(--focus); }
+    .btn[disabled]{
+      opacity:.45;
+      cursor:not-allowed;
+      filter: grayscale(.15);
+      box-shadow:none;
+    }
+
+    .btnGhost{
+      height: var(--tap);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--txt);
+      font-weight: 800;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+      touch-action: manipulation;
+    }
+    .btnGhost:hover{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.20); }
+    .btnGhost:active{ transform: scale(.98); }
+    .btnGhost:focus{ outline:none; box-shadow: var(--focus); }
+
+    .status{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      margin-top: 10px;
+    }
+    .dot{
+      width: 12px; height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.25);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.06);
+      flex: 0 0 auto;
+    }
+    .statusText{
+      min-width: 0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .statusText strong{
+      font-size: .95rem;
+      letter-spacing:.2px;
+    }
+    .statusText span{
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.2;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-size: .86rem;
+      margin-top: 10px;
+      width: fit-content;
+    }
+
+    .sep{
+      height:1px;
+      background: rgba(255,255,255,.08);
+      margin: 12px 0;
+    }
+
+    /* modal */
+    .modal{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      background: rgba(0,0,0,.56);
+      backdrop-filter: blur(10px);
+      z-index: 50;
+    }
+    .modal.open{ display:flex; }
+    .modalCard{
+      width:min(560px, 100%);
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(15,20,32,.96), rgba(10,14,22,.94));
+      box-shadow: 0 25px 80px rgba(0,0,0,.65);
+      overflow:hidden;
+      transform: translateY(10px);
+      animation: pop .2s ease forwards;
+    }
+    @keyframes pop{
+      to{ transform: translateY(0); }
+    }
+
+    .modalHead{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .modalHead h2{
+      margin:0;
+      font-size: 1.02rem;
+      letter-spacing:.2px;
+    }
+    .x{
+      width:42px; height:42px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--txt);
+      cursor:pointer;
+      display:grid; place-items:center;
+      transition: transform .12s ease, background .2s ease;
+    }
+    .x:active{ transform: scale(.97); }
+    .x:focus{ outline:none; box-shadow: var(--focus); }
+
+    .modalBody{ padding: 14px 16px 16px; }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      width: min(560px, calc(100% - 28px));
+      padding: 12px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(20,24,34,.92);
+      box-shadow: 0 16px 45px rgba(0,0,0,.55);
+      display:none;
+      z-index:60;
+    }
+    .toast.show{ display:flex; }
+    .toast .ticon{
+      width: 36px; height: 36px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      margin-right: 10px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      flex: 0 0 auto;
+    }
+    .toast .ttext{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .toast strong{ font-size: .95rem; }
+    .toast span{ font-size: .86rem; color: var(--muted); line-height:1.25; }
+    .toast .tclose{
+      margin-left:auto;
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--txt);
+      cursor:pointer;
+      display:grid; place-items:center;
+    }
+
+    /* loader */
+    .spinner{
+      width:18px; height:18px;
+      border-radius: 999px;
+      border: 2px solid rgba(0,0,0,.15);
+      border-top-color: rgba(0,0,0,.65);
+      animation: spin .85s linear infinite;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+
+    /* helper */
+    .muted{ color: var(--muted); }
+    .hidden{ display:none!important; }
+  </style>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    /************* 🔧 CONFIGURAÇÕES *************/
+    /***********************
+     * 🔧 CONFIG FIXA
+     ************************/
     const RAIO_METROS = 200;
     const BASE_LAT = -23.443930639321323;
     const BASE_LON = -46.52911457443008;
 
-    // 👉 COLE AQUI SEU firebaseConfig
-     const firebaseConfig = {
+    // ✅ COLE AQUI SEU firebaseConfig
+    const firebaseConfig = {
     apiKey: "AIzaSyCiW72I3-AGGVLhxWcCca_5fpvA9ebV8Yk",
     authDomain: "presenca-motoristas-vg.firebaseapp.com",
     projectId: "presenca-motoristas-vg",
@@ -26,205 +486,580 @@
     appId: "1:826408940490:web:6884682bf474ca6eec1533",
     measurementId: "G-SEGE1SVEWM"
     };
-    /*******************************************/
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    const $ = id => document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
 
-    let watchId = null;
-    let ultimaPosicao = null;
-    let gpsValido = false;
-
-    /************* 📍 DISTÂNCIA (HAVERSINE) *************/
-    function distancia(lat1, lon1, lat2, lon2) {
-      const R = 6371000;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a =
-        Math.sin(dLat/2) ** 2 +
-        Math.cos(lat1 * Math.PI/180) *
-        Math.cos(lat2 * Math.PI/180) *
-        Math.sin(dLon/2) ** 2;
-      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    /***********************
+     * ♿ Acessibilidade: zoom
+     ************************/
+    const FS_KEY = "fontScaleVG";
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+    function getScale(){ return parseFloat(localStorage.getItem(FS_KEY) || "1"); }
+    function applyScale(scale){
+      scale = clamp(scale, .90, 1.35);
+      localStorage.setItem(FS_KEY, String(scale));
+      document.documentElement.style.setProperty("--fs", `${Math.round(16 * scale)}px`);
+      $("chipZoom").textContent = `${Math.round(scale*100)}%`;
     }
 
-    /************* 🚫 ANTI GPS FAKE *************/
-    function validarGPS(pos) {
-      const acc = pos.coords.accuracy;
+    $("zMinus").addEventListener("click", () => applyScale(getScale() - 0.05));
+    $("zPlus").addEventListener("click", () => applyScale(getScale() + 0.05));
+    applyScale(getScale());
+
+    /***********************
+     * 🧠 Helpers UI
+     ************************/
+    let busy = false;
+    function setBusy(on, label){
+      busy = !!on;
+      const btn = $("btnPresenca");
+      const sp = $("btnSpin");
+      btn.disabled = on || btn.dataset.locked === "1";
+      sp.classList.toggle("hidden", !on);
+      btn.querySelector("span").textContent = label || (on ? "Processando..." : "Registrar presença");
+    }
+
+    function toast(kind, title, msg){
+      const t = $("toast");
+      $("tTitle").textContent = title;
+      $("tMsg").textContent = msg || "";
+      const ic = $("tIcon");
+      ic.textContent = kind === "ok" ? "✅" : kind === "warn" ? "⚠️" : "❌";
+      t.classList.add("show");
+      clearTimeout(window.__tto);
+      window.__tto = setTimeout(() => t.classList.remove("show"), 5200);
+    }
+    $("tClose").addEventListener("click", () => $("toast").classList.remove("show"));
+
+    function openModal(){ $("modalCadastro").classList.add("open"); }
+    function closeModal(){ $("modalCadastro").classList.remove("open"); }
+
+    $("closeModal").addEventListener("click", closeModal);
+    $("modalCadastro").addEventListener("click", (e) => { if(e.target.id === "modalCadastro") closeModal(); });
+
+    /***********************
+     * 📍 Distância (Haversine)
+     ************************/
+    function distMeters(lat1, lon1, lat2, lon2){
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI/180;
+      const dLon = (lon2 - lon1) * Math.PI/180;
+      const a =
+        Math.sin(dLat/2) ** 2 +
+        Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+        Math.sin(dLon/2) ** 2;
+      return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    /***********************
+     * 🛡️ Anti GPS fake (heurísticas)
+     ************************/
+    let lastFix = null;
+    function isGpsValid(pos){
+      // precisão: bloqueia leituras ruins
+      const acc = pos.coords.accuracy ?? 9999;
       if (acc > 50) return false;
 
-      if (ultimaPosicao) {
-        const d = distancia(
-          ultimaPosicao.lat, ultimaPosicao.lon,
-          pos.coords.latitude, pos.coords.longitude
-        );
-        const dt = (pos.timestamp - ultimaPosicao.time) / 1000;
-        if (dt > 0 && (d / dt) > 50) return false; // teleport
+      // anti "teleporte" / velocidade absurda
+      if (lastFix){
+        const d = distMeters(lastFix.lat, lastFix.lon, pos.coords.latitude, pos.coords.longitude);
+        const dt = Math.max(1, (pos.timestamp - lastFix.t) / 1000);
+        const speed = d / dt; // m/s
+        if (speed > 50) return false; // ~180km/h
       }
 
-      ultimaPosicao = {
-        lat: pos.coords.latitude,
-        lon: pos.coords.longitude,
-        time: pos.timestamp
-      };
+      // timestamp coerente
+      if (!pos.timestamp || Number.isNaN(pos.timestamp)) return false;
 
+      lastFix = { lat: pos.coords.latitude, lon: pos.coords.longitude, t: pos.timestamp };
       return true;
     }
 
-    /************* 📍 MONITORAR LOCALIZAÇÃO *************/
-    function iniciarGPS() {
-      if (!navigator.geolocation) {
-        alert("Seu navegador não suporta localização.");
+    /***********************
+     * 📍 GPS + raio
+     ************************/
+    let gpsOk = false;
+    let watchId = null;
+
+    function setStatus(mode, title, detail){
+      const dot = $("dot");
+      const strong = $("stTitle");
+      const span = $("stDesc");
+
+      strong.textContent = title;
+      span.textContent = detail || "";
+
+      // cor do dot
+      if(mode === "ok"){
+        dot.style.background = "var(--ok)";
+        dot.style.boxShadow = "0 0 0 4px rgba(49,208,127,.14)";
+      } else if(mode === "warn"){
+        dot.style.background = "var(--warn)";
+        dot.style.boxShadow = "0 0 0 4px rgba(255,176,32,.14)";
+      } else {
+        dot.style.background = "var(--danger)";
+        dot.style.boxShadow = "0 0 0 4px rgba(255,77,77,.14)";
+      }
+    }
+
+    function lockPresenceBtn(lock, reason){
+      const btn = $("btnPresenca");
+      btn.dataset.locked = lock ? "1" : "0";
+      btn.disabled = lock || busy;
+      if(lock && reason){
+        $("btnHint").textContent = reason;
+        $("btnHint").classList.remove("hidden");
+      } else {
+        $("btnHint").classList.add("hidden");
+      }
+    }
+
+    function requireGeolocation(){
+      if (!("geolocation" in navigator)){
+        gpsOk = false;
+        lockPresenceBtn(true, "Seu navegador não suporta GPS.");
+        setStatus("bad", "Localização indisponível", "Use um navegador compatível (Chrome/Safari/Edge).");
         return;
       }
 
+      setStatus("warn", "Verificando localização...", "Ative o GPS e permita o acesso para continuar.");
+      lockPresenceBtn(true, "Aguardando localização…");
+
       watchId = navigator.geolocation.watchPosition(
-        pos => {
-          if (!validarGPS(pos)) {
-            gpsValido = false;
-            $("status").innerText = "❌ Localização inválida (GPS suspeito)";
-            $("btnPresenca").disabled = true;
+        (pos) => {
+          if(!isGpsValid(pos)){
+            gpsOk = false;
+            lockPresenceBtn(true, "GPS suspeito / precisão baixa.");
+            setStatus("bad", "Localização inválida", "Desative GPS falso e aguarde o sinal melhorar (precisão ≤ 50m).");
             return;
           }
 
-          const d = distancia(
-            BASE_LAT, BASE_LON,
-            pos.coords.latitude, pos.coords.longitude
-          );
+          const d = distMeters(BASE_LAT, BASE_LON, pos.coords.latitude, pos.coords.longitude);
 
-          if (d <= RAIO_METROS) {
-            gpsValido = true;
-            $("status").innerText = "🟢 Dentro da área";
-            $("btnPresenca").disabled = false;
+          if (d <= RAIO_METROS){
+            gpsOk = true;
+            lockPresenceBtn(false);
+            setStatus("ok", "Dentro da área ✅", `Você está a ~${Math.round(d)}m da base (limite ${RAIO_METROS}m).`);
           } else {
-            gpsValido = false;
-            $("status").innerText = "🔴 Fora da área permitida";
-            $("btnPresenca").disabled = true;
+            gpsOk = false;
+            lockPresenceBtn(true, "Fora da área permitida.");
+            setStatus("bad", "Fora da área", `Você está a ~${Math.round(d)}m (limite ${RAIO_METROS}m).`);
           }
         },
-        err => {
-          alert("Permita a localização para continuar.");
-          $("btnPresenca").disabled = true;
+        (err) => {
+          gpsOk = false;
+          lockPresenceBtn(true, "Permita a localização para continuar.");
+          const msg =
+            err.code === 1 ? "Permissão negada. Ative a localização e permita o acesso."
+            : err.code === 2 ? "Localização indisponível. Verifique o GPS."
+            : "Tempo excedido. Tente novamente.";
+          setStatus("bad", "Localização bloqueada", msg);
+          toast("warn", "Permissão necessária", "Sem localização o app não permite preencher.");
         },
-        { enableHighAccuracy: true, maximumAge: 0 }
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
       );
     }
 
-    /************* 🔐 LOGIN *************/
-    $("login").onclick = async () => {
-      await signInWithPopup(auth, provider);
-    };
+    /***********************
+     * 🛣️ Rota com traço automático (A-12)
+     ************************/
+    function formatRota(raw){
+      let v = (raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (v.length <= 1) return v;
+      return v[0] + "-" + v.slice(1);
+    }
+    $("rota").addEventListener("input", (e) => {
+      e.target.value = formatRota(e.target.value);
+    });
 
-    onAuthStateChanged(auth, async user => {
-      if (!user) return;
-      $("loginBox").style.display = "none";
-      $("app").style.display = "block";
+    /***********************
+     * 🔐 Auth + carregar cadastro
+     ************************/
+    function showAuth(yes){
+      $("authCard").classList.toggle("hidden", !yes);
+      $("mainCard").classList.toggle("hidden", yes);
+      $("sideCard").classList.toggle("hidden", yes);
+    }
 
-      iniciarGPS();
+    function setUserChip(user){
+      if(!user){ $("chipUser").textContent = "Deslogado"; return; }
+      const name = user.displayName ? user.displayName.split(" ")[0] : "Logado";
+      $("chipUser").textContent = `${name}`;
+    }
 
-      const ref = doc(db, "motoristas", user.uid);
-      const snap = await getDoc(ref);
-
-      if (!snap.exists()) {
-        $("cadastro").style.display = "block";
-      } else {
-        $("cadastro").style.display = "none";
+    $("btnLogin").addEventListener("click", async () => {
+      try{
+        $("btnLogin").disabled = true;
+        $("btnLoginTxt").textContent = "Abrindo Google…";
+        await signInWithPopup(auth, provider);
+      } catch (e){
+        console.error(e);
+        toast("bad", "Falha no login", "Verifique o domínio autorizado no Firebase Auth.");
+      } finally {
+        $("btnLogin").disabled = false;
+        $("btnLoginTxt").textContent = "Entrar com Google";
       }
     });
 
-    /************* 🧾 CADASTRO 1ª VEZ *************/
-    $("salvarCadastro").onclick = async () => {
-      const user = auth.currentUser;
-      await setDoc(doc(db, "motoristas", user.uid), {
-        driver_id: $("driver_id").value,
-        nome: $("nome").value,
-        telefone: $("telefone").value,
-        tipo_veiculo: $("veiculo").value,
-        placa: $("placa").value,
-        criado_em: serverTimestamp()
-      });
-      alert("Cadastro salvo.");
-      $("cadastro").style.display = "none";
-    };
+    $("btnLogout").addEventListener("click", async () => {
+      try{
+        await signOut(auth);
+        toast("ok", "Saiu", "Você foi desconectado.");
+      } catch(e){
+        console.error(e);
+      }
+    });
 
-    /************* 🛣️ ROTA COM TRAÇO *************/
-    $("rota").oninput = e => {
-      let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-      if (v.length > 1) v = v[0] + "-" + v.slice(1);
-      e.target.value = v;
-    };
+    async function loadMotorista(user){
+      const ref = doc(db, "motoristas", user.uid);
+      const snap = await getDoc(ref);
 
-    /************* ✅ REGISTRAR PRESENÇA *************/
-    $("btnPresenca").onclick = async () => {
-      if (!gpsValido) return;
+      if (!snap.exists()){
+        // primeira vez: abrir modal de cadastro
+        $("cadastroResumo").innerHTML = `<span class="muted">Primeiro acesso: faça seu cadastro.</span>`;
+        openModal();
+        return null;
+      }
 
-      const user = auth.currentUser;
-      const hoje = new Date().toISOString().slice(0,10);
-
-      await addDoc(collection(db, "presencas"), {
-        uid: user.uid,
-        turno: $("turno").value,
-        rota: $("rota").value,
-        data_dia: hoje,
-        hora: new Date().toLocaleTimeString("pt-BR"),
-        registrado_em: serverTimestamp()
-      });
-
-      alert("Presença registrada com sucesso.");
-    };
-  </script>
-
-  <style>
-    body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
-    .box { max-width:420px; margin:auto; padding:20px; }
-    button, input, select {
-      width:100%; padding:12px; margin:6px 0; font-size:16px;
+      const m = snap.data();
+      $("cadastroResumo").innerHTML = `
+        <div class="pill">🆔 <b>${escapeHtml(m.driver_id)}</b></div>
+        <div class="pill">🚚 <b>${escapeHtml(m.tipo_veiculo)}</b> • ${escapeHtml(m.placa)}</div>
+        <div class="pill">📞 <b>${escapeHtml(m.telefone)}</b></div>
+      `;
+      return m;
     }
-    button { background:#ff5722; color:#fff; border:none; border-radius:6px; }
-    button:disabled { background:#ccc; }
-    .card { background:#fff; padding:16px; border-radius:8px; }
-    #app { display:none; }
-  </style>
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    let motoristaCache = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      setUserChip(user);
+
+      if (!user){
+        showAuth(true);
+        gpsOk = false;
+        if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+        return;
+      }
+
+      showAuth(false);
+      requireGeolocation();
+
+      try{
+        motoristaCache = await loadMotorista(user);
+      } catch(e){
+        console.error(e);
+        toast("bad", "Erro", "Não foi possível carregar seu cadastro.");
+      }
+    });
+
+    /***********************
+     * 🧾 Cadastro 1ª vez (trava depois via Rules)
+     ************************/
+    $("saveCadastro").addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if(!user){ toast("bad", "Sem login", "Faça login com Google."); return; }
+
+      const driver_id = $("c_driver").value.trim();
+      const nome = $("c_nome").value.trim();
+      const telefone = $("c_tel").value.trim();
+      const tipo_veiculo = $("c_veh").value;
+      const placa = $("c_placa").value.trim().toUpperCase();
+
+      if(!driver_id || !nome || !telefone || !tipo_veiculo || !placa){
+        toast("warn", "Faltou informação", "Preencha todos os campos do cadastro.");
+        return;
+      }
+
+      try{
+        $("saveCadastro").disabled = true;
+        $("saveCadastroTxt").textContent = "Salvando…";
+
+        await setDoc(doc(db, "motoristas", user.uid), {
+          driver_id,
+          nome,
+          telefone,
+          tipo_veiculo,
+          placa,
+          criado_em: serverTimestamp()
+        });
+
+        closeModal();
+        toast("ok", "Cadastro salvo", "Pronto! Agora é só registrar sua presença quando estiver no raio.");
+        motoristaCache = await loadMotorista(user);
+      } catch(e){
+        console.error(e);
+        toast("bad", "Não salvou", "Verifique as regras do Firestore ou conexão.");
+      } finally {
+        $("saveCadastro").disabled = false;
+        $("saveCadastroTxt").textContent = "Salvar cadastro";
+      }
+    });
+
+    /***********************
+     * ✅ Registrar presença (temporária por data_dia)
+     ************************/
+    $("btnPresenca").addEventListener("click", async () => {
+      if (!gpsOk){
+        toast("warn", "Localização inválida", "Você precisa estar dentro do raio e com GPS válido.");
+        return;
+      }
+
+      const user = auth.currentUser;
+      if(!user){
+        toast("bad", "Sem login", "Faça login com Google.");
+        return;
+      }
+
+      const turno = $("turno").value;
+      const rota = formatRota($("rota").value.trim());
+      if(!turno || !rota || rota.length < 3 || !rota.includes("-")){
+        toast("warn", "Rota inválida", "Digite a rota no formato A-12.");
+        return;
+      }
+
+      try{
+        setBusy(true, "Registrando…");
+
+        // garante que temos os dados fixos
+        if(!motoristaCache){
+          motoristaCache = await loadMotorista(user);
+          if(!motoristaCache){
+            toast("warn", "Cadastre-se", "Finalize seu cadastro antes de registrar presença.");
+            setBusy(false, "Registrar presença");
+            return;
+          }
+        }
+
+        const hoje = new Date().toISOString().slice(0,10);
+        const hora = new Date().toLocaleTimeString("pt-BR");
+
+        await addDoc(collection(db, "presencas"), {
+          uid: user.uid,
+
+          // dados fixos (copiados para o painel)
+          driver_id: motoristaCache.driver_id,
+          nome: motoristaCache.nome,
+          telefone: motoristaCache.telefone,
+          tipo_veiculo: motoristaCache.tipo_veiculo,
+          placa: motoristaCache.placa,
+
+          // dados do dia
+          turno,
+          rota,
+          data_dia: hoje,
+          hora,
+          registrado_em: serverTimestamp()
+        });
+
+        toast("ok", "Presença registrada", `Tudo certo ✅ Turno ${turno} • Rota ${rota}`);
+        $("rota").value = "";
+      } catch(e){
+        console.error(e);
+        toast("bad", "Falhou", "Não foi possível registrar. Tente novamente.");
+      } finally {
+        setBusy(false, "Registrar presença");
+      }
+    });
+
+    // UX: se o usuário tenta preencher sem GPS permitido
+    window.addEventListener("focus", () => {
+      // se voltou pro app, tenta revalidar
+      if(auth.currentUser && watchId === null){
+        requireGeolocation();
+      }
+    });
+  </script>
 </head>
 
 <body>
-  <div class="box">
-
-    <div id="loginBox" class="card">
-      <button id="login">Entrar com Google</button>
-    </div>
-
-    <div id="app">
-      <p id="status">Aguardando GPS…</p>
-
-      <div id="cadastro" class="card" style="display:none">
-        <input id="driver_id" placeholder="ID do motorista" />
-        <input id="nome" placeholder="Nome" />
-        <input id="telefone" placeholder="Telefone" />
-        <select id="veiculo">
-          <option>FIORINO</option>
-          <option>PASSEIO</option>
-          <option>VAN</option>
-          <option>MOTO</option>
-        </select>
-        <input id="placa" placeholder="Placa" />
-        <button id="salvarCadastro">Salvar cadastro</button>
+  <div class="wrap">
+    <div class="topbar" role="banner" aria-label="Topo do aplicativo">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div style="min-width:0">
+          <h1>Presença • Motorista</h1>
+          <p>GPS obrigatório • raio 200m • login Google</p>
+        </div>
       </div>
 
-      <div class="card">
-        <select id="turno">
-          <option>AM</option>
-          <option>SD</option>
-        </select>
-        <input id="rota" placeholder="Rota (ex: A-12)" />
-        <button id="btnPresenca" disabled>Registrar Presença</button>
+      <div class="actions">
+        <div class="zoom" aria-label="Ajuste de tamanho de texto">
+          <button id="zMinus" class="zbtn" aria-label="Diminuir texto">A-</button>
+          <span id="chipZoom" class="chip" style="padding:10px 10px">100%</span>
+          <button id="zPlus" class="zbtn" aria-label="Aumentar texto">A+</button>
+        </div>
+        <span class="chip">👤 <b id="chipUser">Deslogado</b></span>
       </div>
     </div>
 
+    <!-- Card Login -->
+    <section id="authCard" class="card">
+      <div class="cardHeader">
+        <div>
+          <h2 class="title">Entrar</h2>
+          <p class="sub">Use seu Gmail para acessar sua conta. Sem login, não dá pra registrar presença.</p>
+        </div>
+      </div>
+      <div class="cardBody">
+        <button id="btnLogin" class="btn" aria-label="Entrar com Google">
+          <div class="spinner hidden" id="loginSpin" aria-hidden="true"></div>
+          <span id="btnLoginTxt">Entrar com Google</span>
+        </button>
+        <div class="pill" style="margin-top:12px">
+          ✅ Dica: se der erro de domínio, autorize <b>ownfleet.github.io</b> no Firebase Auth.
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <!-- Principal -->
+      <section id="mainCard" class="card hidden" aria-label="Registro de presença">
+        <div class="cardHeader">
+          <div>
+            <h2 class="title">Registro de presença</h2>
+            <p class="sub">Você só consegue registrar estando dentro da área e com GPS válido.</p>
+          </div>
+          <button id="btnLogout" class="btnGhost" aria-label="Sair">
+            🚪 Sair
+          </button>
+        </div>
+
+        <div class="cardBody">
+          <div class="status" aria-live="polite">
+            <div class="dot" id="dot" aria-hidden="true"></div>
+            <div class="statusText">
+              <strong id="stTitle">Aguardando GPS…</strong>
+              <span id="stDesc">Ative a localização para continuar.</span>
+            </div>
+          </div>
+
+          <div class="pill" id="btnHintWrap" style="width:100%">
+            <span id="btnHint" class="muted">Aguardando localização…</span>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="two">
+            <div class="field">
+              <label for="turno">Turno</label>
+              <select id="turno" aria-label="Selecione o turno">
+                <option value="AM">AM</option>
+                <option value="SD">SD</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="rota">Rota</label>
+              <input id="rota" inputmode="text" autocomplete="off" placeholder="Ex: A-12" aria-label="Digite a rota A-12">
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <button id="btnPresenca" class="btn" disabled data-locked="1" aria-label="Registrar presença">
+              <div id="btnSpin" class="spinner hidden" aria-hidden="true"></div>
+              <span>Registrar presença</span>
+            </button>
+            <div id="btnHint" class="hidden"></div>
+          </div>
+
+          <div class="pill" style="margin-top:12px">
+            🛡️ Anti GPS falso: se a precisão estiver alta demais ou tiver “teleporte”, o app bloqueia.
+          </div>
+        </div>
+      </section>
+
+      <!-- Lateral / resumo -->
+      <aside id="sideCard" class="card hidden" aria-label="Resumo do cadastro">
+        <div class="cardHeader">
+          <div>
+            <h2 class="title">Seu cadastro</h2>
+            <p class="sub">Se for o primeiro acesso, você vai cadastrar uma vez e nunca mais precisa repetir.</p>
+          </div>
+        </div>
+        <div class="cardBody">
+          <div id="cadastroResumo" class="row"></div>
+          <div class="sep"></div>
+          <div class="pill">📌 Dica: se o GPS estiver ruim, vá para uma área aberta e aguarde alguns segundos.</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Modal cadastro -->
+  <div class="modal" id="modalCadastro" role="dialog" aria-modal="true" aria-label="Cadastro do motorista">
+    <div class="modalCard">
+      <div class="modalHead">
+        <h2>Primeiro acesso • Cadastro</h2>
+        <button class="x" id="closeModal" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modalBody">
+        <div class="two">
+          <div class="field">
+            <label for="c_driver">ID</label>
+            <input id="c_driver" inputmode="text" placeholder="Ex: 12345">
+          </div>
+          <div class="field">
+            <label for="c_tel">Telefone</label>
+            <input id="c_tel" inputmode="tel" placeholder="Ex: 11999999999">
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:10px">
+          <label for="c_nome">Nome</label>
+          <input id="c_nome" inputmode="text" placeholder="Seu nome completo">
+        </div>
+
+        <div class="two" style="margin-top:10px">
+          <div class="field">
+            <label for="c_veh">Tipo de veículo</label>
+            <select id="c_veh">
+              <option value="FIORINO">FIORINO</option>
+              <option value="PASSEIO">PASSEIO</option>
+              <option value="VAN">VAN</option>
+              <option value="MOTO">MOTO</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="c_placa">Placa</label>
+            <input id="c_placa" inputmode="text" placeholder="ABC1D23">
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <button id="saveCadastro" class="btn" aria-label="Salvar cadastro">
+            <span id="saveCadastroTxt">Salvar cadastro</span>
+          </button>
+          <div class="pill" style="margin-top:10px">
+            🔒 Depois de salvo, seus dados ficam travados no banco (segurança).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="ticon" id="tIcon">✅</div>
+    <div class="ttext">
+      <strong id="tTitle">Ok</strong>
+      <span id="tMsg">Mensagem</span>
+    </div>
+    <button class="tclose" id="tClose" aria-label="Fechar">✕</button>
   </div>
 </body>
 </html>
