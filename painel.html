@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel • Presença (AM/SD)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#070a12;
+      --bg2:#0b1020;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --line: rgba(255,255,255,.10);
+      --txt:#e9edf7;
+      --muted:#a5afc3;
+      --brand:#ff5a2a;
+      --brand2:#ff7a4a;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --r: 16px;
+
+      --fz: 16px;
+      --fz-sm: 13px;
+      --fz-lg: 18px;
+      --fz-xl: 22px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 700px at 15% -10%, rgba(255,90,42,.25), transparent 55%),
+        radial-gradient(1200px 700px at 85% 0%, rgba(34,197,94,.15), transparent 55%),
+        radial-gradient(900px 600px at 70% 110%, rgba(59,130,246,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      font-size: var(--fz);
+      overflow-x:hidden;
+    }
+
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 18px 28px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border-radius: calc(var(--r) + 4px);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 10px;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      min-width: 260px;
+    }
+    .dot{
+      width: 12px; height: 32px; border-radius: 999px;
+      background: linear-gradient(180deg, var(--brand), var(--brand2));
+      box-shadow: 0 10px 30px rgba(255,90,42,.35);
+    }
+    .title{
+      display:flex; flex-direction:column; line-height:1.1;
+    }
+    .title b{font-size: var(--fz-xl)}
+    .title span{font-size: var(--fz-sm); color: var(--muted)}
+
+    .right{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:flex; align-items:center; gap:10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      border-radius: 999px;
+      color: var(--txt);
+      user-select:none;
+    }
+    .pill small{color: var(--muted); font-size: var(--fz-sm)}
+    .pill .who{font-weight:600}
+
+    .btn{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--txt);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .08s ease, border-color .2s ease, background .2s ease;
+    }
+    .btn:hover{border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.08)}
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      border-color: rgba(255,90,42,.45);
+      background: linear-gradient(180deg, rgba(255,90,42,.95), rgba(255,122,74,.9));
+      color: #120a06;
+      box-shadow: 0 16px 40px rgba(255,90,42,.25);
+    }
+    .btn.danger{
+      border-color: rgba(239,68,68,.45);
+      background: rgba(239,68,68,.12);
+    }
+
+    .a11y{
+      display:flex; align-items:center; gap:8px;
+      padding: 6px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.05);
+    }
+    .a11y .btn{padding: 8px 10px; border-radius: 10px}
+    .a11y .btn strong{letter-spacing:.3px}
+
+    .grid{
+      margin-top: 16px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .card{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      border-radius: calc(var(--r) + 6px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+    }
+    .card .hd b{font-size: var(--fz-lg)}
+    .card .hd .sub{color: var(--muted); font-size: var(--fz-sm)}
+    .card .bd{padding: 14px 16px}
+
+    .filters{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .seg{
+      display:flex; gap: 8px; align-items:center;
+      padding: 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+    }
+    .seg button{
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition: background .2s ease, color .2s ease;
+    }
+    .seg button.active{
+      background: rgba(255,255,255,.10);
+      color: var(--txt);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
+    .letters{
+      display:flex; gap: 8px; flex-wrap:wrap; align-items:center;
+    }
+    .letters button{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--txt);
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor:pointer;
+      min-width: 44px;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    }
+    .letters button:hover{border-color: rgba(255,255,255,.20); background: rgba(255,255,255,.06)}
+    .letters button:active{transform: translateY(1px)}
+    .letters button.active{
+      border-color: rgba(255,90,42,.55);
+      background: rgba(255,90,42,.12);
+    }
+
+    .metaRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .badge{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--txt);
+      font-weight:700;
+    }
+    .badge small{color: var(--muted); font-weight:600}
+
+    .tableWrap{
+      border: 1px solid var(--line);
+      border-radius: calc(var(--r) + 4px);
+      overflow: hidden;
+      background: rgba(0,0,0,.18);
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: var(--fz-sm);
+    }
+    thead th{
+      text-align:left;
+      padding: 12px 12px;
+      background: rgba(255,255,255,.06);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing:.2px;
+      position: sticky;
+      top: 78px; /* abaixo da topbar */
+      backdrop-filter: blur(10px);
+      z-index: 2;
+    }
+    tbody td{
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      vertical-align: middle;
+    }
+    tbody tr:hover{
+      background: rgba(255,255,255,.04);
+    }
+
+    .rotaPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      letter-spacing:.3px;
+      border: 1px solid rgba(255,90,42,.55);
+      background: rgba(255,90,42,.10);
+      min-width: 72px;
+    }
+
+    .muted{color: var(--muted)}
+    .ok{color: var(--ok)}
+    .warn{color: var(--warn)}
+    .bad{color: var(--bad)}
+
+    .empty{
+      padding: 18px 16px;
+      border: 1px dashed rgba(255,255,255,.14);
+      border-radius: calc(var(--r) + 4px);
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+
+    .toast{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      max-width: 420px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(8,10,18,.85);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      color: var(--txt);
+      display:none;
+      z-index: 99;
+      font-size: var(--fz-sm);
+    }
+
+    .spin{
+      display:inline-block;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: rgba(255,255,255,.85);
+      animation: spin .8s linear infinite;
+      margin-right: 8px;
+      vertical-align: -2px;
+    }
+    @keyframes spin{to{transform: rotate(360deg)}}
+
+    @media (max-width: 860px){
+      thead th{top: 120px}
+      .brand{min-width:auto}
+      .title b{font-size: 18px}
+      .topbar{flex-direction:column; align-items:flex-start}
+      .right{width:100%; justify-content:space-between}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="topbar" role="banner" aria-label="Topo do painel">
+      <div class="brand">
+        <div class="dot" aria-hidden="true"></div>
+        <div class="title">
+          <b>Painel • Presença</b>
+          <span id="todayLbl">Carregue para ver as presenças do dia</span>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="a11y" aria-label="Acessibilidade">
+          <button class="btn" id="fzDown" title="Diminuir fonte (A-)"><strong>A-</strong></button>
+          <button class="btn" id="fzReset" title="Fonte padrão"><strong>100%</strong></button>
+          <button class="btn" id="fzUp" title="Aumentar fonte (A+)"><strong>A+</strong></button>
+        </div>
+
+        <div class="pill" aria-label="Usuário">
+          <small>Conta</small>
+          <span class="who" id="userName">—</span>
+        </div>
+
+        <button class="btn danger" id="btnSignOut">Sair</button>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <div class="card" aria-label="Acesso e filtros">
+        <div class="hd">
+          <div>
+            <b>Controles</b>
+            <div class="sub">Sem realtime — clique em <b>Atualizar</b> quando quiser recarregar.</div>
+          </div>
+          <div class="metaRow">
+            <span class="badge"><small>Total</small> <span id="countTotal">0</span></span>
+            <span class="badge"><small>Filtrado</small> <span id="countFiltered">0</span></span>
+            <button class="btn primary" id="btnRefresh"><span id="refreshIcon">🔄</span> Atualizar</button>
+          </div>
+        </div>
+
+        <div class="bd">
+          <div class="filters">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <div class="seg" role="tablist" aria-label="Filtro por turno">
+                <button id="turnAM" class="active" data-turn="AM" role="tab" aria-selected="true">AM</button>
+                <button id="turnSD" data-turn="SD" role="tab" aria-selected="false">SD</button>
+              </div>
+
+              <div class="badge" title="Mostra só presenças de hoje">
+                <small>Data</small> <span id="dateKey">—</span>
+              </div>
+            </div>
+
+            <div class="letters" aria-label="Filtro por letra">
+              <button class="active" data-letter="ALL">Todas</button>
+              <button data-letter="A">A</button><button data-letter="B">B</button><button data-letter="C">C</button><button data-letter="D">D</button>
+              <button data-letter="E">E</button><button data-letter="F">F</button><button data-letter="G">G</button><button data-letter="H">H</button>
+              <button data-letter="I">I</button><button data-letter="J">J</button><button data-letter="K">K</button><button data-letter="L">L</button>
+              <button data-letter="M">M</button><button data-letter="N">N</button><button data-letter="O">O</button><button data-letter="P">P</button>
+              <button data-letter="Q">Q</button><button data-letter="R">R</button><button data-letter="S">S</button><button data-letter="T">T</button>
+              <button data-letter="U">U</button><button data-letter="V">V</button><button data-letter="W">W</button><button data-letter="X">X</button>
+              <button data-letter="Y">Y</button><button data-letter="Z">Z</button>
+            </div>
+          </div>
+
+          <div style="margin-top:12px" id="authBox" class="empty">
+            Faça login para acessar o painel.
+            <div style="margin-top:10px">
+              <button class="btn primary" id="btnSignIn">Entrar com Google</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card" aria-label="Lista de presenças">
+        <div class="hd">
+          <div>
+            <b>Presenças do dia</b>
+            <div class="sub">Ordenado por rota (letra + número). Horário mostrado normalmente.</div>
+          </div>
+        </div>
+
+        <div class="bd">
+          <div class="tableWrap" id="tableWrap" style="display:none;">
+            <table aria-label="Tabela de presenças">
+              <thead>
+                <tr>
+                  <th style="width:110px">Rota</th>
+                  <th style="width:90px">Hora</th>
+                  <th>Nome</th>
+                  <th style="width:110px">ID</th>
+                  <th style="width:140px">Telefone</th>
+                  <th style="width:120px">Veículo</th>
+                  <th style="width:120px">Placa</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+
+          <div id="emptyBox" class="empty" style="display:none;">
+            Nenhuma presença carregada ainda. Clique em <b>Atualizar</b>.
+          </div>
+
+          <div id="noDataBox" class="empty" style="display:none;">
+            Nenhuma presença encontrada para os filtros selecionados.
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Firebase (CDN / módulos) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    /************************************************************
+     * 1) COLE AQUI SEU firebaseConfig (Firebase Console > Config)
+     ************************************************************/
+    const firebaseConfig = {
+    apiKey: "AIzaSyCiW72I3-AGGVLhxWcCca_5fpvA9ebV8Yk",
+    authDomain: "presenca-motoristas-vg.firebaseapp.com",
+    projectId: "presenca-motoristas-vg",
+    storageBucket: "presenca-motoristas-vg.firebasestorage.app",
+    messagingSenderId: "826408940490",
+    appId: "1:826408940490:web:6884682bf474ca6eec1533",
+    measurementId: "G-SEGE1SVEWM"
+    };
+
+    /************************************************************
+     * 2) DEFINA QUEM PODE VER O PAINEL (admins)
+     ************************************************************/
+    const ADMINS = [
+      "richard.monteiro@shopee.com" // <- deixe o seu aqui e pode adicionar outros
+    ];
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    // ===== UI refs =====
+    const $ = (s) => document.querySelector(s);
+    const todayLbl = $("#todayLbl");
+    const userName = $("#userName");
+    const btnSignIn = $("#btnSignIn");
+    const btnSignOut = $("#btnSignOut");
+    const authBox = $("#authBox");
+    const btnRefresh = $("#btnRefresh");
+    const refreshIcon = $("#refreshIcon");
+    const tbody = $("#tbody");
+    const tableWrap = $("#tableWrap");
+    const emptyBox = $("#emptyBox");
+    const noDataBox = $("#noDataBox");
+    const countTotal = $("#countTotal");
+    const countFiltered = $("#countFiltered");
+    const dateKeyEl = $("#dateKey");
+    const toast = $("#toast");
+
+    // Turno
+    const turnAM = $("#turnAM");
+    const turnSD = $("#turnSD");
+
+    // A11y
+    const fzDown = $("#fzDown");
+    const fzReset = $("#fzReset");
+    const fzUp = $("#fzUp");
+
+    // ===== Estado =====
+    let CURRENT_USER = null;
+    let IS_ADMIN = false;
+
+    let selectedTurn = "AM";      // default
+    let selectedLetter = "ALL";   // default
+    let cachePresencas = [];      // dados do dia (carregados no botão)
+
+    // ===== Utils: data/hora (America/Sao_Paulo) =====
+    function pad2(n){ return String(n).padStart(2, "0"); }
+
+    function spNow(){
+      // usa Intl para pegar data/hora em Sao Paulo sem libs externas
+      const parts = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false
+      }).formatToParts(new Date());
+
+      const get = (type) => parts.find(p => p.type === type)?.value;
+      return {
+        y: Number(get("year")),
+        m: Number(get("month")),
+        d: Number(get("day")),
+        hh: Number(get("hour")),
+        mm: Number(get("minute")),
+        ss: Number(get("second")),
+        dateKey: `${get("year")}-${get("month")}-${get("day")}`
+      };
+    }
+
+    function spDayRangeTimestamps(){
+      // cria timestamps do início/fim do dia em Sao Paulo
+      const n = spNow();
+      const start = new Date(Date.UTC(n.y, n.m-1, n.d, 3, 0, 0)); // ~00:00 BRT é 03:00 UTC (aprox). Mantém coerência pro mesmo fuso.
+      const end   = new Date(Date.UTC(n.y, n.m-1, n.d+1, 3, 0, 0));
+      return { start: Timestamp.fromDate(start), end: Timestamp.fromDate(end), dateKey: n.dateKey };
+    }
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.style.display = "block";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.style.display = "none", 2800);
+    }
+
+    function setLoading(isLoading){
+      btnRefresh.disabled = isLoading;
+      refreshIcon.innerHTML = isLoading ? '<span class="spin"></span>' : '🔄';
+    }
+
+    // ===== Rota: parse + sort =====
+    function parseRota(rotaRaw){
+      const s = String(rotaRaw || "").trim().toUpperCase();
+      const m = s.match(/^([A-Z])\s*-\s*(\d{1,3})$/);
+      if(!m) return { letter: "?", num: 9999, text: s };
+      return { letter: m[1], num: Number(m[2]), text: `${m[1]}-${Number(m[2])}` };
+    }
+
+    function sortByRota(a, b){
+      const ra = parseRota(a.rota);
+      const rb = parseRota(b.rota);
+      if (ra.letter !== rb.letter) return ra.letter.localeCompare(rb.letter);
+      return ra.num - rb.num;
+    }
+
+    function formatHora(ts){
+      if(!ts) return "--:--";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      // hora em São Paulo
+      return new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).format(d);
+    }
+
+    // ===== Render =====
+    function renderTable(items){
+      tbody.innerHTML = "";
+
+      countTotal.textContent = String(cachePresencas.length);
+      countFiltered.textContent = String(items.length);
+
+      if(cachePresencas.length === 0){
+        tableWrap.style.display = "none";
+        noDataBox.style.display = "none";
+        emptyBox.style.display = "block";
+        return;
+      }
+
+      if(items.length === 0){
+        tableWrap.style.display = "none";
+        emptyBox.style.display = "none";
+        noDataBox.style.display = "block";
+        return;
+      }
+
+      emptyBox.style.display = "none";
+      noDataBox.style.display = "none";
+      tableWrap.style.display = "block";
+
+      for(const p of items){
+        const rota = parseRota(p.rota).text || "--";
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td><span class="rotaPill">${rota}</span></td>
+          <td class="muted">${formatHora(p.criado_em)}</td>
+          <td>${escapeHtml(p.nome || "-")}</td>
+          <td class="muted">${escapeHtml(p.driver_id || "-")}</td>
+          <td class="muted">${escapeHtml(p.telefone || "-")}</td>
+          <td>${escapeHtml(p.tipo_veiculo || "-")}</td>
+          <td class="muted">${escapeHtml(p.placa || "-")}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "").replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
+    }
+
+    function applyFiltersAndRender(){
+      let items = [...cachePresencas];
+
+      // turno
+      items = items.filter(p => String(p.turno || "").toUpperCase() === selectedTurn);
+
+      // letra
+      if(selectedLetter !== "ALL"){
+        items = items.filter(p => parseRota(p.rota).letter === selectedLetter);
+      }
+
+      // ordenar por rota (letra + número)
+      items.sort(sortByRota);
+
+      renderTable(items);
+    }
+
+    // ===== Carregar presenças do dia (SEM realtime) =====
+    async function loadTodayPresencas(){
+      if(!IS_ADMIN){
+        showToast("Sem permissão para ver o painel.");
+        return;
+      }
+
+      const { start, end, dateKey } = spDayRangeTimestamps();
+      dateKeyEl.textContent = dateKey;
+      todayLbl.textContent = `Presenças de hoje (${dateKey}) • ordenado por rota`;
+      setLoading(true);
+
+      try{
+        const q = query(
+          collection(db, "presencas"),
+          where("criado_em", ">=", start),
+          where("criado_em", "<", end),
+        );
+
+        const snap = await getDocs(q);
+        const list = [];
+        snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+
+        cachePresencas = list;
+        applyFiltersAndRender();
+        showToast(`Carregado: ${list.length} presenças de hoje.`);
+      }catch(err){
+        console.error(err);
+        showToast("Erro ao carregar presenças. Verifique regras/permissões.");
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    // ===== Auth / Admin gate =====
+    function computeIsAdmin(user){
+      const email = (user?.email || "").toLowerCase().trim();
+      return ADMINS.map(e=>e.toLowerCase().trim()).includes(email);
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      CURRENT_USER = user || null;
+      IS_ADMIN = computeIsAdmin(CURRENT_USER);
+
+      if(!CURRENT_USER){
+        userName.textContent = "—";
+        authBox.style.display = "block";
+        btnRefresh.disabled = true;
+        tableWrap.style.display = "none";
+        emptyBox.style.display = "none";
+        noDataBox.style.display = "none";
+        countTotal.textContent = "0";
+        countFiltered.textContent = "0";
+        dateKeyEl.textContent = "—";
+        todayLbl.textContent = "Faça login para acessar o painel";
+        return;
+      }
+
+      userName.textContent = CURRENT_USER.displayName || CURRENT_USER.email || "Logado";
+      authBox.style.display = "none";
+
+      if(!IS_ADMIN){
+        btnRefresh.disabled = true;
+        cachePresencas = [];
+        renderTable([]);
+        todayLbl.textContent = "Acesso restrito (admin)";
+        showToast("Acesso restrito: você não é admin.");
+        return;
+      }
+
+      btnRefresh.disabled = false;
+      const n = spNow();
+      dateKeyEl.textContent = n.dateKey;
+      todayLbl.textContent = `Pronto • clique em Atualizar para carregar (${n.dateKey})`;
+      emptyBox.style.display = "block";
+    });
+
+    btnSignIn.addEventListener("click", async () => {
+      try{
+        await signInWithPopup(auth, provider);
+      }catch(err){
+        console.error(err);
+        showToast("Falha no login. Veja domínios autorizados no Firebase.");
+      }
+    });
+
+    btnSignOut.addEventListener("click", async () => {
+      try{ await signOut(auth); }catch(e){}
+    });
+
+    btnRefresh.addEventListener("click", loadTodayPresencas);
+
+    // ===== Turno UI =====
+    function setTurn(t){
+      selectedTurn = t;
+      turnAM.classList.toggle("active", t === "AM");
+      turnSD.classList.toggle("active", t === "SD");
+      turnAM.setAttribute("aria-selected", t === "AM" ? "true" : "false");
+      turnSD.setAttribute("aria-selected", t === "SD" ? "true" : "false");
+      applyFiltersAndRender();
+    }
+    turnAM.addEventListener("click", () => setTurn("AM"));
+    turnSD.addEventListener("click", () => setTurn("SD"));
+
+    // ===== Letras UI =====
+    document.querySelectorAll(".letters button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".letters button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedLetter = btn.dataset.letter;
+        applyFiltersAndRender();
+      });
+    });
+
+    // ===== Acessibilidade: tamanho da fonte =====
+    const FZ_KEY = "painel_font_scale";
+    function applyFontScale(scale){
+      // scale: 0.9 .. 1.2
+      const base = 16 * scale;
+      document.documentElement.style.setProperty("--fz", `${base}px`);
+      document.documentElement.style.setProperty("--fz-sm", `${13 * scale}px`);
+      document.documentElement.style.setProperty("--fz-lg", `${18 * scale}px`);
+      document.documentElement.style.setProperty("--fz-xl", `${22 * scale}px`);
+      localStorage.setItem(FZ_KEY, String(scale));
+    }
+
+    const saved = Number(localStorage.getItem(FZ_KEY) || "1");
+    if(saved) applyFontScale(Math.min(1.2, Math.max(0.9, saved)));
+
+    fzDown.addEventListener("click", () => {
+      const cur = Number(localStorage.getItem(FZ_KEY) || "1");
+      applyFontScale(Math.max(0.9, (cur - 0.05)));
+    });
+    fzUp.addEventListener("click", () => {
+      const cur = Number(localStorage.getItem(FZ_KEY) || "1");
+      applyFontScale(Math.min(1.2, (cur + 0.05)));
+    });
+    fzReset.addEventListener("click", () => applyFontScale(1));
+
+    // ===== init labels =====
+    const n = spNow();
+    dateKeyEl.textContent = n.dateKey;
+    todayLbl.textContent = "Faça login para acessar o painel";
+  </script>
+</body>
+</html>
