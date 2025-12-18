@@ -1,241 +1,230 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Lista de Presença • HUB LSP-18 VG</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Presença • Motorista</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Firebase CDN -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-<style>
-:root{
-  --brand:#ee4d2d;--brand2:#ff6b3d;--bg:#0b0f19;
-  --card:rgba(255,255,255,.08);--line:rgba(255,255,255,.15);
-  --radius:22px;--ink:#f1f5f9;--muted:#9fb0c0;
-}
+    /************* 🔧 CONFIGURAÇÕES *************/
+    const RAIO_METROS = 200;
+    const BASE_LAT = -23.443930639321323;
+    const BASE_LON = -46.52911457443008;
 
-*{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family:"Plus Jakarta Sans",system-ui,Arial;
-  background:linear-gradient(145deg,#0b0f19,#111b2a);
-  color:var(--ink);
-  display:flex;align-items:center;justify-content:center;
-  min-height:100vh;padding:0 18px;
-}
+    // 👉 COLE AQUI SEU firebaseConfig
+     const firebaseConfig = {
+    apiKey: "AIzaSyCiW72I3-AGGVLhxWcCca_5fpvA9ebV8Yk",
+    authDomain: "presenca-motoristas-vg.firebaseapp.com",
+    projectId: "presenca-motoristas-vg",
+    storageBucket: "presenca-motoristas-vg.firebasestorage.app",
+    messagingSenderId: "826408940490",
+    appId: "1:826408940490:web:6884682bf474ca6eec1533",
+    measurementId: "G-SEGE1SVEWM"
+    };
+    /*******************************************/
 
-/* ===== Header ===== */
-header{
-  position:fixed;top:0;width:100%;text-align:center;
-  background:linear-gradient(90deg,var(--brand),var(--brand2),var(--brand));
-  color:#fff;padding:16px;font-weight:800;font-size:1.3rem;
-  box-shadow:0 10px 30px rgba(238,77,45,.3);
-  animation:bar 8s linear infinite;background-size:200% 100%;
-}
-@keyframes bar{0%{background-position:0 0}100%{background-position:200% 0}}
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
-.container{
-  width:min(960px,96vw);
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  box-shadow:0 40px 90px rgba(238,77,45,.25);
-  padding:28px;margin-top:80px;
-  backdrop-filter:blur(12px);
-}
+    const $ = id => document.getElementById(id);
 
-/* ===== Mapa ===== */
-#map{height:320px;border-radius:18px;margin-bottom:16px;overflow:hidden}
-.chip{
-  display:inline-block;padding:10px 14px;border-radius:999px;
-  border:1px dashed rgba(255,255,255,.25);
-  font-weight:700;font-size:.95rem;margin-bottom:12px;
-}
-.ok{color:#10b981;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);}
-.bad{color:#f87171;background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.4);}
+    let watchId = null;
+    let ultimaPosicao = null;
+    let gpsValido = false;
 
-/* ===== Inputs ===== */
-label{font-weight:700;display:block;margin:8px 4px 6px;}
-input,select{
-  width:100%;padding:16px 14px;border-radius:16px;
-  background:rgba(255,255,255,.08);border:1.8px solid var(--line);
-  color:#fff;font:inherit;
-}
-input:focus,select:focus{border-color:var(--brand2);outline:none;box-shadow:0 0 0 3px rgba(255,107,61,.25)}
-.grid{display:grid;gap:12px}
-@media(min-width:700px){.grid.two{grid-template-columns:1fr 1fr}}
+    /************* 📍 DISTÂNCIA (HAVERSINE) *************/
+    function distancia(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat/2) ** 2 +
+        Math.cos(lat1 * Math.PI/180) *
+        Math.cos(lat2 * Math.PI/180) *
+        Math.sin(dLon/2) ** 2;
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
 
-/* ===== Botões ===== */
-.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:18px;}
-.btn{
-  padding:16px 22px;border:0;border-radius:16px;
-  background:linear-gradient(135deg,var(--brand),var(--brand2));
-  color:#fff;font-weight:800;cursor:pointer;
-  box-shadow:0 20px 50px rgba(238,77,45,.25);
-  transition:.2s transform;
-}
-.btn:hover{transform:translateY(-2px)}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+    /************* 🚫 ANTI GPS FAKE *************/
+    function validarGPS(pos) {
+      const acc = pos.coords.accuracy;
+      if (acc > 50) return false;
 
-/* ===== Loader ===== */
-#loadingOverlay{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(11,15,25,.9);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  z-index:9999;color:#fff;font-weight:600;font-size:1.2rem;
-}
-.loader{
-  width:64px;height:64px;border-radius:50%;
-  border:5px solid rgba(255,255,255,.1);
-  border-top-color:#ff6b3d;
-  animation:spin 1s linear infinite;margin-bottom:18px;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ===== Footer ===== */
-footer{text-align:center;margin-top:26px;color:#9fb0c0;font-size:.9rem}
-footer span{color:#ffbea9}
-</style>
-</head>
-<body>
-
-<header>Lista de Presença • HUB LSP–18 VG</header>
-
-<!-- MODAL DE CARREGAMENTO -->
-<div id="loadingOverlay">
-  <div class="loader"></div>
-  <p>Calculando localização... aguarde ⏳</p>
-</div>
-
-<!-- MODAL GPS -->
-<div class="container" id="gpsCard" style="display:none">
-  <h2>Status de Localização</h2>
-  <p>O sistema verifica sua posição — só é possível continuar dentro do raio autorizado.</p>
-  <div id="map"></div>
-  <div id="statusChip" class="chip bad">Aguardando localização...</div>
-  <p>Distância até o HUB: <b id="distance">–</b> m</p>
-  <div class="actions">
-    <button class="btn" id="continueBtn" disabled>Continuar</button>
-  </div>
-</div>
-
-<!-- MODAL FORM -->
-<div class="container" id="formCard" style="display:none">
-  <h2>Registrar Presença</h2>
-  <p>Preencha os dados abaixo:</p>
-
-  <div class="grid two">
-    <div><label>ID do Motorista</label><input id="driver_id"></div>
-    <div><label>Placa</label><input id="plate" placeholder="ABC1D23"></div>
-    <div><label>Nome Completo</label><input id="name"></div>
-    <div><label>Veículo</label>
-      <select id="vehicle"><option value="">Selecione...</option><option>Moto</option><option>Passeio</option><option>Fiorino</option></select>
-    </div>
-    <div><label>Letra–Número da Rota</label><input id="assignment_code" maxlength="4" placeholder="A-12"></div>
-    <div><label>Turno</label><select id="turno"><option>AM</option><option>SD</option></select></div>
-  </div>
-
-  <div class="actions">
-    <button class="btn" id="submitBtn">Registrar ✅</button>
-  </div>
-</div>
-
-<footer>© HUB LSP–18 VG • Sistema de presença com geofence ativo<br><span>by Create Richard LSP-12</span></footer>
-
-<script>
-const hub = {lat:-23.443930639321323, lon:-46.52911457443008, radius_m:250};
-let coord=null;
-const chip=document.getElementById("statusChip");
-const distEl=document.getElementById("distance");
-const continueBtn=document.getElementById("continueBtn");
-const gpsCard=document.getElementById("gpsCard");
-const formCard=document.getElementById("formCard");
-const loading=document.getElementById("loadingOverlay");
-
-const map=L.map("map",{zoomControl:false}).setView([hub.lat,hub.lon],18);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-L.marker([hub.lat,hub.lon]).addTo(map).bindPopup("📍 HUB LSP–18 VG");
-L.circle([hub.lat,hub.lon],{radius:hub.radius_m,color:"#ff6b3d",fillColor:"#ff6b3d",fillOpacity:0.25}).addTo(map);
-let userMarker=null;
-
-function toRad(v){return v*Math.PI/180;}
-function dist(lat1,lon1,lat2,lon2){
-  const R=6371000;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);
-  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
-function monitorGPS(){
-  if(!navigator.geolocation){
-    alert("GPS não suportado neste dispositivo.");
-    return;
-  }
-
-  navigator.geolocation.watchPosition(pos=>{
-    coord=pos.coords;
-    const d=dist(coord.latitude,coord.longitude,hub.lat,hub.lon);
-    distEl.textContent=d.toFixed(1);
-
-    if(userMarker) map.removeLayer(userMarker);
-    userMarker=L.marker([coord.latitude,coord.longitude]).addTo(map);
-
-    if(d<=hub.radius_m){
-      chip.textContent="✅ Dentro do Raio";
-      chip.className="chip ok";
-      continueBtn.disabled=false;
-    }else{
-      chip.textContent="⚠️ Fora do Raio";
-      chip.className="chip bad";
-      continueBtn.disabled=true;
-      if(formCard.style.display==="block"){
-        alert("Você saiu do raio do HUB. O formulário foi bloqueado até retornar.");
-        formCard.style.display="none";
-        gpsCard.style.display="block";
+      if (ultimaPosicao) {
+        const d = distancia(
+          ultimaPosicao.lat, ultimaPosicao.lon,
+          pos.coords.latitude, pos.coords.longitude
+        );
+        const dt = (pos.timestamp - ultimaPosicao.time) / 1000;
+        if (dt > 0 && (d / dt) > 50) return false; // teleport
       }
+
+      ultimaPosicao = {
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        time: pos.timestamp
+      };
+
+      return true;
     }
 
-    // Oculta tela de carregamento ao obter primeira localização
-    if(loading.style.display!=="none"){
-      loading.style.display="none";
-      gpsCard.style.display="block";
+    /************* 📍 MONITORAR LOCALIZAÇÃO *************/
+    function iniciarGPS() {
+      if (!navigator.geolocation) {
+        alert("Seu navegador não suporta localização.");
+        return;
+      }
+
+      watchId = navigator.geolocation.watchPosition(
+        pos => {
+          if (!validarGPS(pos)) {
+            gpsValido = false;
+            $("status").innerText = "❌ Localização inválida (GPS suspeito)";
+            $("btnPresenca").disabled = true;
+            return;
+          }
+
+          const d = distancia(
+            BASE_LAT, BASE_LON,
+            pos.coords.latitude, pos.coords.longitude
+          );
+
+          if (d <= RAIO_METROS) {
+            gpsValido = true;
+            $("status").innerText = "🟢 Dentro da área";
+            $("btnPresenca").disabled = false;
+          } else {
+            gpsValido = false;
+            $("status").innerText = "🔴 Fora da área permitida";
+            $("btnPresenca").disabled = true;
+          }
+        },
+        err => {
+          alert("Permita a localização para continuar.");
+          $("btnPresenca").disabled = true;
+        },
+        { enableHighAccuracy: true, maximumAge: 0 }
+      );
     }
-  },
-  err=>{
-    loading.style.display="none";
-    alert("Erro ao obter localização: " + err.message);
-  },
-  {enableHighAccuracy:true});
-}
 
-continueBtn.onclick=()=>{
-  gpsCard.style.display="none";
-  formCard.style.display="block";
-};
+    /************* 🔐 LOGIN *************/
+    $("login").onclick = async () => {
+      await signInWithPopup(auth, provider);
+    };
 
-monitorGPS();
+    onAuthStateChanged(auth, async user => {
+      if (!user) return;
+      $("loginBox").style.display = "none";
+      $("app").style.display = "block";
 
-document.getElementById("submitBtn").onclick=()=>{
-  const dados={
-    driver_id:document.getElementById("driver_id").value.trim(),
-    name:document.getElementById("name").value.trim(),
-    vehicle:document.getElementById("vehicle").value,
-    plate:document.getElementById("plate").value.trim().toUpperCase(),
-    assignment_code:document.getElementById("assignment_code").value.trim(),
-    turno:document.getElementById("turno").value,
-    lat:coord?.latitude, lon:coord?.longitude
-  };
-  for(const[k,v]of Object.entries(dados)) if(!v){alert("Preencha todos os campos.");return;}
-  document.getElementById("submitBtn").disabled=true;
-  google.script.run.withSuccessHandler(r=>{
-    document.getElementById("submitBtn").disabled=false;
-    if(r.ok){alert("✅ Presença registrada com sucesso!");location.reload();}
-    else alert("Erro: "+r.error);
-  }).withFailureHandler(e=>{
-    alert("Falha: "+e.message);
-    document.getElementById("submitBtn").disabled=false;
-  }).salvarPresenca(dados);
-};
-</script>
+      iniciarGPS();
+
+      const ref = doc(db, "motoristas", user.uid);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        $("cadastro").style.display = "block";
+      } else {
+        $("cadastro").style.display = "none";
+      }
+    });
+
+    /************* 🧾 CADASTRO 1ª VEZ *************/
+    $("salvarCadastro").onclick = async () => {
+      const user = auth.currentUser;
+      await setDoc(doc(db, "motoristas", user.uid), {
+        driver_id: $("driver_id").value,
+        nome: $("nome").value,
+        telefone: $("telefone").value,
+        tipo_veiculo: $("veiculo").value,
+        placa: $("placa").value,
+        criado_em: serverTimestamp()
+      });
+      alert("Cadastro salvo.");
+      $("cadastro").style.display = "none";
+    };
+
+    /************* 🛣️ ROTA COM TRAÇO *************/
+    $("rota").oninput = e => {
+      let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (v.length > 1) v = v[0] + "-" + v.slice(1);
+      e.target.value = v;
+    };
+
+    /************* ✅ REGISTRAR PRESENÇA *************/
+    $("btnPresenca").onclick = async () => {
+      if (!gpsValido) return;
+
+      const user = auth.currentUser;
+      const hoje = new Date().toISOString().slice(0,10);
+
+      await addDoc(collection(db, "presencas"), {
+        uid: user.uid,
+        turno: $("turno").value,
+        rota: $("rota").value,
+        data_dia: hoje,
+        hora: new Date().toLocaleTimeString("pt-BR"),
+        registrado_em: serverTimestamp()
+      });
+
+      alert("Presença registrada com sucesso.");
+    };
+  </script>
+
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
+    .box { max-width:420px; margin:auto; padding:20px; }
+    button, input, select {
+      width:100%; padding:12px; margin:6px 0; font-size:16px;
+    }
+    button { background:#ff5722; color:#fff; border:none; border-radius:6px; }
+    button:disabled { background:#ccc; }
+    .card { background:#fff; padding:16px; border-radius:8px; }
+    #app { display:none; }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+
+    <div id="loginBox" class="card">
+      <button id="login">Entrar com Google</button>
+    </div>
+
+    <div id="app">
+      <p id="status">Aguardando GPS…</p>
+
+      <div id="cadastro" class="card" style="display:none">
+        <input id="driver_id" placeholder="ID do motorista" />
+        <input id="nome" placeholder="Nome" />
+        <input id="telefone" placeholder="Telefone" />
+        <select id="veiculo">
+          <option>FIORINO</option>
+          <option>PASSEIO</option>
+          <option>VAN</option>
+          <option>MOTO</option>
+        </select>
+        <input id="placa" placeholder="Placa" />
+        <button id="salvarCadastro">Salvar cadastro</button>
+      </div>
+
+      <div class="card">
+        <select id="turno">
+          <option>AM</option>
+          <option>SD</option>
+        </select>
+        <input id="rota" placeholder="Rota (ex: A-12)" />
+        <button id="btnPresenca" disabled>Registrar Presença</button>
+      </div>
+    </div>
+
+  </div>
 </body>
 </html>
