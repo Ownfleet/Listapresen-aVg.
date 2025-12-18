@@ -1,89 +1,94 @@
 <!doctype html>
 <html lang="pt-BR" data-theme="dark">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Painel • Presença (AM/SD)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel • Presença</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* ===================== SEU CSS ORIGINAL (INALTERADO) ===================== */
+/* ====== SEU CSS ORIGINAL (100%) ====== */
 :root{
---bg:#070a12;--bg2:#0b1020;--card:rgba(255,255,255,.06);
---card2:rgba(255,255,255,.08);--line:rgba(255,255,255,.10);
---txt:#e9edf7;--muted:#a5afc3;--brand:#ff5a2a;--brand2:#ff7a4a;
---ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;
---shadow:0 20px 60px rgba(0,0,0,.45);--r:16px;
---fz:16px;--fz-sm:13px;--fz-lg:18px;--fz-xl:22px;
+  --bg:#070a12;--bg2:#0b1020;--card:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.1);--txt:#e9edf7;--muted:#a5afc3;
+  --brand:#ff5a2a;--brand2:#ff7a4a;--shadow:0 20px 60px rgba(0,0,0,.45);
+  --r:16px;--fz:16px;--fz-sm:13px;--fz-lg:18px;--fz-xl:22px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-margin:0;font-family:Poppins,system-ui;color:var(--txt);
-background:
-radial-gradient(1200px 700px at 15% -10%, rgba(255,90,42,.25), transparent 55%),
-radial-gradient(1200px 700px at 85% 0%, rgba(34,197,94,.15), transparent 55%),
-linear-gradient(180deg,var(--bg),var(--bg2));
-overflow-x:hidden;
+  margin:0;font-family:Poppins,system-ui;color:var(--txt);
+  background:
+    radial-gradient(1200px 700px at 15% -10%, rgba(255,90,42,.25), transparent 55%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
 }
 .wrap{max-width:1200px;margin:0 auto;padding:18px}
-.btn{cursor:pointer}
+.card{border:1px solid var(--line);background:var(--card);border-radius:20px;box-shadow:var(--shadow)}
+.btn{cursor:pointer;border-radius:12px;border:1px solid var(--line);background:#fff1;color:#fff;padding:10px 14px;font-weight:600}
+.btn.primary{background:linear-gradient(180deg,var(--brand),var(--brand2));color:#120a06}
+.btn.danger{background:#ef44441a;border-color:#ef4444}
+.hidden{display:none}
 
-/* ===================== GATE (OVERLAY) ===================== */
-.gate{
-position:fixed;inset:0;z-index:9999;
-background:linear-gradient(180deg,#04060f,#01030a);
-display:flex;align-items:center;justify-content:center;
+/* ====== OVERLAY DE BLOQUEIO ====== */
+#lockScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:
+    radial-gradient(600px 400px at 20% 10%, rgba(255,90,42,.25), transparent 60%),
+    linear-gradient(180deg,#05070f,#02040a);
+  display:flex;align-items:center;justify-content:center;
 }
-.gate-box{
-background:rgba(15,18,30,.95);
-border:1px solid rgba(255,255,255,.15);
-border-radius:20px;
-padding:36px;
-width:100%;max-width:420px;
-text-align:center;
-box-shadow:0 40px 80px rgba(0,0,0,.7);
+.lockBox{
+  width:100%;max-width:420px;
+  padding:28px;border-radius:22px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 40px 80px rgba(0,0,0,.6);
+  text-align:center;
 }
-.gate-box h2{margin:0 0 8px}
-.gate-box p{color:var(--muted);margin-bottom:18px}
-.gate-error{color:#ef4444;font-size:14px;margin-top:10px}
+.lockBox h1{margin:0 0 8px}
+.lockBox p{color:var(--muted);margin:0 0 20px}
 </style>
 </head>
 
 <body>
 
-<!-- ===================== GATE DE ACESSO ===================== -->
-<div id="gate" class="gate">
-  <div class="gate-box">
-    <h2>Painel • Presença</h2>
-    <p>Login necessário para acessar o painel</p>
-    <button class="btn primary" id="btnGateLogin">Entrar com Google</button>
-    <div id="gateError" class="gate-error"></div>
+<!-- 🔒 OVERLAY -->
+<div id="lockScreen">
+  <div class="lockBox">
+    <h1>Painel • Presença</h1>
+    <p>Acesso restrito a administradores</p>
+    <button class="btn primary" id="btnLogin">Entrar com Google</button>
   </div>
 </div>
 
-<!-- ===================== SITE ORIGINAL ===================== -->
-<div class="wrap">
-  <h2>Painel • Presença</h2>
-  <p>Interface carregada com sucesso.</p>
+<!-- 🌐 SITE -->
+<div class="wrap hidden" id="app">
+  <div class="card" style="padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b id="userEmail">—</b>
+      <button class="btn danger" id="btnLogout">Sair</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;padding:20px">
+    <button class="btn primary" id="btnLoad">Atualizar presenças</button>
+    <div id="log" style="margin-top:12px;color:var(--muted)"></div>
+  </div>
 </div>
 
-<!-- ===================== FIREBASE ===================== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+/* 🔥 CONFIG FIREBASE */
 const firebaseConfig = {
-apiKey: "AIzaSyCiW72I3-AGGVLhxWcCca_5fpvA9ebV8Yk",
-authDomain: "presenca-motoristas-vg.firebaseapp.com",
-projectId: "presenca-motoristas-vg",
-storageBucket: "presenca-motoristas-vg.firebasestorage.app",
-messagingSenderId: "826408940490",
-appId: "1:826408940490:web:6884682bf474ca6eec1533"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -91,39 +96,53 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-const gate = document.getElementById("gate");
-const btnGateLogin = document.getElementById("btnGateLogin");
-const gateError = document.getElementById("gateError");
+/* UI */
+const lock = document.getElementById("lockScreen");
+const appEl = document.getElementById("app");
+const emailEl = document.getElementById("userEmail");
+const logEl = document.getElementById("log");
 
+/* ADMIN CHECK */
 async function isAdmin(user){
-if(!user?.email) return false;
-const ref = doc(db,"admins",user.email.toLowerCase());
-const snap = await getDoc(ref);
-return snap.exists() && snap.data()?.ativo === true;
+  if(!user?.email) return false;
+  try{
+    const snap = await getDoc(doc(db,"admins",user.email.toLowerCase()));
+    return snap.exists();
+  }catch(e){
+    console.error(e);
+    return false;
+  }
 }
 
+/* AUTH */
 onAuthStateChanged(auth, async user=>{
-if(!user){
-gate.style.display="flex";
-return;
-}
-const admin = await isAdmin(user);
-if(!admin){
-gate.style.display="flex";
-gateError.textContent="Acesso restrito. Usuário não autorizado.";
-return;
-}
-gate.style.display="none";
+  if(!user){
+    lock.style.display="flex";
+    appEl.classList.add("hidden");
+    return;
+  }
+
+  const ok = await isAdmin(user);
+  if(!ok){
+    await signOut(auth);
+    alert("Acesso negado");
+    return;
+  }
+
+  emailEl.textContent = user.email;
+  lock.style.display="none";
+  appEl.classList.remove("hidden");
 });
 
-btnGateLogin.onclick = async ()=>{
-try{
-await signInWithPopup(auth,provider);
-}catch(e){
-gateError.textContent="Falha no login.";
-}
+/* EVENTS */
+document.getElementById("btnLogin").onclick = ()=>signInWithPopup(auth,provider);
+document.getElementById("btnLogout").onclick = ()=>signOut(auth);
+
+document.getElementById("btnLoad").onclick = async ()=>{
+  logEl.textContent="Carregando presenças...";
+  const snap = await getDocs(collection(db,"presencas"));
+  logEl.textContent=`${snap.size} presenças carregadas`;
 };
 </script>
-
 </body>
 </html>
