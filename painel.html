@@ -10,12 +10,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* ====== SEU CSS ORIGINAL (100%) ====== */
 :root{
   --bg:#070a12;--bg2:#0b1020;--card:rgba(255,255,255,.06);
   --line:rgba(255,255,255,.1);--txt:#e9edf7;--muted:#a5afc3;
   --brand:#ff5a2a;--brand2:#ff7a4a;--shadow:0 20px 60px rgba(0,0,0,.45);
-  --r:16px;--fz:16px;--fz-sm:13px;--fz-lg:18px;--fz-xl:22px;
+  --r:16px;--fz:16px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -26,30 +25,38 @@ body{
     linear-gradient(180deg,var(--bg),var(--bg2));
 }
 .wrap{max-width:1200px;margin:0 auto;padding:18px}
-.card{border:1px solid var(--line);background:var(--card);border-radius:20px;box-shadow:var(--shadow)}
+.card{border:1px solid var(--line);background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:20px}
 .btn{cursor:pointer;border-radius:12px;border:1px solid var(--line);background:#fff1;color:#fff;padding:10px 14px;font-weight:600}
 .btn.primary{background:linear-gradient(180deg,var(--brand),var(--brand2));color:#120a06}
 .btn.danger{background:#ef44441a;border-color:#ef4444}
 .hidden{display:none}
 
-/* ====== OVERLAY DE BLOQUEIO ====== */
+/* overlay */
 #lockScreen{
   position:fixed;inset:0;z-index:9999;
-  background:
-    radial-gradient(600px 400px at 20% 10%, rgba(255,90,42,.25), transparent 60%),
-    linear-gradient(180deg,#05070f,#02040a);
+  background:linear-gradient(180deg,#05070f,#02040a);
   display:flex;align-items:center;justify-content:center;
 }
 .lockBox{
-  width:100%;max-width:420px;
-  padding:28px;border-radius:22px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.15);
-  box-shadow:0 40px 80px rgba(0,0,0,.6);
+  width:100%;max-width:420px;padding:28px;border-radius:22px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);
   text-align:center;
 }
-.lockBox h1{margin:0 0 8px}
-.lockBox p{color:var(--muted);margin:0 0 20px}
+
+/* tabela */
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{padding:12px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
+th{color:var(--muted);font-weight:600}
+
+/* modal */
+#modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  display:none;align-items:center;justify-content:center;z-index:9998;
+}
+.modalBox{
+  background:#0b1020;border-radius:20px;padding:24px;
+  max-width:420px;width:100%;
+}
 </style>
 </head>
 
@@ -58,41 +65,60 @@ body{
 <!-- 🔒 OVERLAY -->
 <div id="lockScreen">
   <div class="lockBox">
-    <h1>Painel • Presença</h1>
+    <h2>Painel • Presença</h2>
     <p>Acesso restrito a administradores</p>
     <button class="btn primary" id="btnLogin">Entrar com Google</button>
   </div>
 </div>
 
-<!-- 🌐 SITE -->
+<!-- MODAL -->
+<div id="modal">
+  <div class="modalBox">
+    <h3>Mais informações</h3>
+    <div id="modalContent"></div>
+    <button class="btn" onclick="closeModal()">Fechar</button>
+  </div>
+</div>
+
+<!-- APP -->
 <div class="wrap hidden" id="app">
-  <div class="card" style="padding:20px">
+
+  <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <b id="userEmail">—</b>
       <button class="btn danger" id="btnLogout">Sair</button>
     </div>
   </div>
 
-  <div class="card" style="margin-top:16px;padding:20px">
+  <div class="card" style="margin-top:16px">
     <button class="btn primary" id="btnLoad">Atualizar presenças</button>
-    <div id="log" style="margin-top:12px;color:var(--muted)"></div>
+    <span id="count" style="margin-left:12px;color:var(--muted)"></span>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Rota</th>
+          <th>Hora</th>
+          <th>Nome</th>
+          <th>ID</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
   </div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-/* 🔥 CONFIG FIREBASE */
 const firebaseConfig = {
-    apiKey: "AIzaSyCiW72I3-AGGVLhxWcCca_5fpvA9ebV8Yk",
-    authDomain: "presenca-motoristas-vg.firebaseapp.com",
-    projectId: "presenca-motoristas-vg",
-    storageBucket: "presenca-motoristas-vg.firebasestorage.app",
-    messagingSenderId: "826408940490",
-    appId: "1:826408940490:web:6884682bf474ca6eec1533",
-    measurementId: "G-SEGE1SVEWM"
+  apiKey: "AIzaSyCiW72I3-AGGVLhxWcCca_5fpvA9ebV8Yk",
+  authDomain: "presenca-motoristas-vg.firebaseapp.com",
+  projectId: "presenca-motoristas-vg"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -100,54 +126,65 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-/* UI */
 const lock = document.getElementById("lockScreen");
 const appEl = document.getElementById("app");
 const emailEl = document.getElementById("userEmail");
-const logEl = document.getElementById("log");
+const tbody = document.getElementById("tbody");
+const countEl = document.getElementById("count");
+const modal = document.getElementById("modal");
+const modalContent = document.getElementById("modalContent");
 
-/* ADMIN CHECK */
 async function isAdmin(user){
   if(!user?.email) return false;
-  try{
-    const snap = await getDoc(doc(db,"admins",user.email.toLowerCase()));
-    return snap.exists();
-  }catch(e){
-    console.error(e);
-    return false;
-  }
+  const snap = await getDoc(doc(db,"admins",user.email.toLowerCase()));
+  return snap.exists();
 }
 
-/* AUTH */
 onAuthStateChanged(auth, async user=>{
-  if(!user){
-    lock.style.display="flex";
-    appEl.classList.add("hidden");
-    return;
-  }
-
-  const ok = await isAdmin(user);
-  if(!ok){
+  if(!user){ lock.style.display="flex"; return; }
+  if(!(await isAdmin(user))){
     await signOut(auth);
     alert("Acesso negado");
     return;
   }
-
-  emailEl.textContent = user.email;
+  emailEl.textContent=user.email;
   lock.style.display="none";
   appEl.classList.remove("hidden");
 });
 
-/* EVENTS */
-document.getElementById("btnLogin").onclick = ()=>signInWithPopup(auth,provider);
-document.getElementById("btnLogout").onclick = ()=>signOut(auth);
+btnLogin.onclick=()=>signInWithPopup(auth,provider);
+btnLogout.onclick=()=>signOut(auth);
 
-document.getElementById("btnLoad").onclick = async ()=>{
-  logEl.textContent="Carregando presenças...";
+btnLoad.onclick=async()=>{
+  tbody.innerHTML="";
   const snap = await getDocs(collection(db,"presencas"));
-  logEl.textContent=`${snap.size} presenças carregadas`;
+  countEl.textContent=`${snap.size} presenças`;
+  snap.forEach(d=>{
+    const p=d.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${p.rota}</td>
+      <td>${new Date(p.criado_em.seconds*1000).toLocaleTimeString()}</td>
+      <td>${p.nome}</td>
+      <td>${p.driver_id}</td>
+      <td><button class="btn" onclick="verMais('${p.driver_id}')">Ver mais</button></td>`;
+    tbody.appendChild(tr);
+  });
 };
+
+window.verMais=async(id)=>{
+  const snap=await getDoc(doc(db,"motoristas",id));
+  if(!snap.exists()) return;
+  const d=snap.data();
+  modalContent.innerHTML=`
+    <p><b>Nome:</b> ${d.nome}</p>
+    <p><b>Telefone:</b> ${d.telefone}</p>
+    <p><b>Placa:</b> ${d.placa}</p>
+    <p><b>Veículo:</b> ${d.tipo_veiculo}</p>`;
+  modal.style.display="flex";
+};
+
+window.closeModal=()=>modal.style.display="none";
 </script>
 </body>
 </html>
-
